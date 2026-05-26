@@ -1,0 +1,89 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LockKeyhole, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useLockedInStore } from "@/store/useLockedInStore";
+
+const authSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+
+type AuthValues = z.infer<typeof authSchema>;
+
+export function AuthScreen() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const login = useLockedInStore((state) => state.login);
+  const signup = useLockedInStore((state) => state.signup);
+  const pushToast = useLockedInStore((state) => state.pushToast);
+  const [busy, setBusy] = useState(false);
+  const { register, handleSubmit, formState } = useForm<AuthValues>({
+    resolver: zodResolver(authSchema),
+    defaultValues: { name: "LockedIn Demo", email: "demo@lockedin.app", password: "password123" }
+  });
+
+  const onSubmit = async (values: AuthValues) => {
+    setBusy(true);
+    try {
+      if (mode === "signup") {
+        await signup({ name: values.name || "LockedIn User", email: values.email, password: values.password });
+      } else {
+        await login({ email: values.email, password: values.password });
+      }
+    } catch (error) {
+      pushToast({ title: "Authentication failed", description: error instanceof Error ? error.message : "Try again.", tone: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-background p-4">
+      <div className="surface-line pointer-events-none absolute inset-0 opacity-70" />
+      <div className="pointer-events-none absolute top-0 h-96 w-[44rem] rounded-full bg-primary/14 blur-3xl" />
+      <Card className="relative w-full max-w-md p-6">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <LockKeyhole className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">LockedIn</p>
+              <p className="text-xs text-muted-foreground">Your life. Organized.</p>
+            </div>
+          </div>
+          <Sparkles className="h-5 w-5 text-primary" />
+        </div>
+
+        <h1 className="text-2xl font-bold">{mode === "login" ? "Welcome back" : "Create your OS"}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign in to access protected productivity and placement tracking routes.
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-3">
+          {mode === "signup" && <Input placeholder="Name" {...register("name")} />}
+          <Input placeholder="Email" type="email" {...register("email")} />
+          <Input placeholder="Password" type="password" {...register("password")} />
+          {(formState.errors.email || formState.errors.password) && (
+            <p className="text-xs text-red-300">Use a valid email and a password of at least 8 characters.</p>
+          )}
+          <Button className="w-full" disabled={busy}>
+            {busy ? "Checking..." : mode === "login" ? "Log in" : "Sign up"}
+          </Button>
+        </form>
+
+        <button
+          className="mt-5 text-sm text-muted-foreground transition hover:text-foreground"
+          onClick={() => setMode(mode === "login" ? "signup" : "login")}
+        >
+          {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
+        </button>
+      </Card>
+    </main>
+  );
+}
