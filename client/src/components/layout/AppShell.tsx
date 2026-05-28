@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="w-full bg-transparent outline-none"
-                  placeholder="Search tasks, companies, notes"
+                  placeholder="Search tasks, companies, descriptions"
                 />
               </div>
               <div className="flex items-center gap-2">

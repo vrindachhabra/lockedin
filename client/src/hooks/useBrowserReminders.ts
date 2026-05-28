@@ -10,9 +10,9 @@ export function useBrowserReminders(tasks: Task[], enabled: boolean) {
     }
 
     const timers = tasks
-      .filter((task) => task.reminderAt && !task.completed)
+      .filter((task) => task.deadline && !task.completed)
       .map((task) => {
-        const ms = new Date(task.reminderAt!).getTime() - Date.now();
+        const ms = new Date(task.deadline!).getTime() - Date.now();
         if (ms <= 0 || ms > 1000 * 60 * 60 * 24) return undefined;
         return window.setTimeout(() => {
           if (Notification.permission === "granted") {

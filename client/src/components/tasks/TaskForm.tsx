@@ -5,7 +5,6 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { toInputDate } from "@/lib/date";
@@ -16,10 +15,9 @@ const schema = z.object({
   category: z.string().min(1),
   priority: z.enum(["low", "medium", "high"]),
   dueDate: z.string().min(1),
+  deadline: z.string().optional(),
   schedule: z.enum(["today", "tomorrow", "future", "weekend", "recurring"]),
-  recurrence: z.enum(["none", "daily", "weekly", "monthly"]),
-  reminderAt: z.string().optional(),
-  notes: z.string()
+  recurrence: z.enum(["none", "daily", "weekly", "monthly"])
 });
 
 type Values = z.infer<typeof schema>;
@@ -30,10 +28,9 @@ const defaults: Values = {
   category: "DSA",
   priority: "medium",
   dueDate: toInputDate(new Date()),
+  deadline: "",
   schedule: "today",
-  recurrence: "none",
-  reminderAt: "",
-  notes: ""
+  recurrence: "none"
 };
 
 export function TaskForm() {
@@ -50,7 +47,7 @@ export function TaskForm() {
     await addTask({
       ...values,
       dueDate: new Date(values.dueDate).toISOString(),
-      reminderAt: values.reminderAt ? new Date(values.reminderAt).toISOString() : undefined,
+      deadline: values.deadline ? new Date(values.deadline).toISOString() : undefined,
       status: "todo",
       completed: false
     });
@@ -61,7 +58,7 @@ export function TaskForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
       <Input placeholder="Task title" {...form.register("title")} />
-      <Textarea placeholder="Description" {...form.register("description")} />
+      <Input placeholder="Description" {...form.register("description")} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Select {...form.register("category")}>
           {categories.map((category) => <option key={category}>{category}</option>)}
@@ -71,7 +68,14 @@ export function TaskForm() {
           <option value="medium">Medium priority</option>
           <option value="high">High priority</option>
         </Select>
-        <Input type="date" {...form.register("dueDate")} />
+        <div>
+          <label className="mb-2 block text-xs font-medium text-muted-foreground">Date of doing</label>
+          <Input type="date" {...form.register("dueDate")} />
+        </div>
+        <div>
+          <label className="mb-2 block text-xs font-medium text-muted-foreground">Deadline, if any</label>
+          <Input type="date" {...form.register("deadline")} />
+        </div>
         <Select {...form.register("schedule")}>
           <option value="today">Today</option>
           <option value="tomorrow">Tomorrow</option>
@@ -85,9 +89,7 @@ export function TaskForm() {
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
         </Select>
-        <Input type="datetime-local" {...form.register("reminderAt")} />
       </div>
-      <Textarea placeholder="Notes" {...form.register("notes")} />
       {form.formState.errors.title && <p className="text-xs text-red-300">Add a task title.</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="secondary" onClick={() => setModal(null)}>Cancel</Button>

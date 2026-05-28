@@ -22,10 +22,9 @@ export const seedDashboard: DashboardPayload = {
       category: "DSA",
       priority: "high",
       dueDate: plusDays(0),
+      deadline: plusDays(0),
       schedule: "today",
       recurrence: "none",
-      reminderAt: plusDays(0),
-      notes: "Use Striver sheet and mark weak patterns.",
       status: "in-progress",
       completed: false
     },
@@ -36,9 +35,9 @@ export const seedDashboard: DashboardPayload = {
       category: "Placement",
       priority: "high",
       dueDate: plusDays(1),
+      deadline: plusDays(3),
       schedule: "tomorrow",
       recurrence: "none",
-      notes: "Use resume v4 as base.",
       status: "todo",
       completed: false
     },
@@ -51,7 +50,6 @@ export const seedDashboard: DashboardPayload = {
       dueDate: plusDays(6),
       schedule: "weekend",
       recurrence: "weekly",
-      notes: "Keep Sunday evening review protected.",
       status: "todo",
       completed: false
     },
@@ -62,9 +60,9 @@ export const seedDashboard: DashboardPayload = {
       category: "Core CS",
       priority: "medium",
       dueDate: plusDays(-1),
+      deadline: plusDays(0),
       schedule: "future",
       recurrence: "none",
-      notes: "Pending from yesterday.",
       status: "todo",
       completed: false
     },
@@ -77,7 +75,6 @@ export const seedDashboard: DashboardPayload = {
       dueDate: plusDays(0),
       schedule: "recurring",
       recurrence: "daily",
-      notes: "Keep it under ten minutes.",
       status: "done",
       completed: true,
       completedAt: plusDays(0)

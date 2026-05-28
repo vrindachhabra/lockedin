@@ -27,7 +27,7 @@ function useFilteredTasks() {
   const search = useDebounce(useLockedInStore((state) => state.search));
 
   return tasks.filter((task) => {
-    const matchesSearch = [task.title, task.category, task.notes].join(" ").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
     if (filter === "today") return isToday(task.dueDate);
     if (filter === "upcoming") return new Date(task.dueDate) >= new Date() && !task.completed;
@@ -52,7 +52,8 @@ function TaskRow({ task }: { task: Task }) {
       <div className="min-w-0 flex-1">
         <p className={cn("truncate text-sm font-semibold", task.completed && "text-muted-foreground line-through")}>{task.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {task.category} / {formatDate(task.dueDate)} / {task.recurrence}
+          {task.category} / Doing {formatDate(task.dueDate)}
+          {task.deadline ? ` / Deadline ${formatDate(task.deadline)}` : ""} / {task.recurrence}
         </p>
       </div>
       <span className={cn("rounded-md px-2 py-1 text-xs capitalize", task.priority === "high" ? "bg-red-400/10 text-red-300" : "bg-white/8 text-muted-foreground")}>

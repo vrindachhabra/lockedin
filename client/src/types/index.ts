@@ -20,10 +20,9 @@ export type Task = {
   category: string;
   priority: Priority;
   dueDate: string;
+  deadline?: string;
   schedule: TaskSchedule;
   recurrence: "none" | "daily" | "weekly" | "monthly";
-  reminderAt?: string;
-  notes: string;
   status: TaskStatus;
   completed: boolean;
   completedAt?: string;
