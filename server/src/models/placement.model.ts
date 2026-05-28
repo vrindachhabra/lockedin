@@ -13,8 +13,8 @@ const placementSchema = new Schema(
     testDuration: { type: String, required: true },
     status: {
       type: String,
-      enum: ["wishlist", "applied", "oa-scheduled", "interview", "offer", "rejected"],
-      default: "wishlist",
+      enum: ["shortlisted", "applied", "oa-scheduled", "interview", "offer", "rejected"],
+      default: "shortlisted",
       index: true
     },
     notes: { type: String, default: "" },

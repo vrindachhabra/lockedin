@@ -16,3 +16,4 @@ placementRouter.get("/", listPlacements);
 placementRouter.post("/", validateBody(placementSchema), createPlacement);
 placementRouter.patch("/:id", validateBody(updatePlacementSchema), updatePlacement);
 placementRouter.delete("/:id", deletePlacement);
+

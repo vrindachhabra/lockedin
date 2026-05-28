@@ -3,13 +3,10 @@ import {
   BriefcaseBusiness,
   CalendarCheck2,
   FolderKanban,
-  Gauge,
   LogOut,
   Menu,
   Plus,
   Search,
-  Wifi,
-  WifiOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -21,15 +18,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const setModal = useLockedInStore((state) => state.setModal);
   const search = useLockedInStore((state) => state.search);
   const setSearch = useLockedInStore((state) => state.setSearch);
-  const user = useLockedInStore((state) => state.user);
   const workspaces = useLockedInStore((state) => state.workspaces);
   const logout = useLockedInStore((state) => state.logout);
-  const isOnline = useLockedInStore((state) => state.isOnline);
 
   const tabs = [
     { id: "daily-goals" as const, label: "Daily Goals", icon: CalendarCheck2 },
     { id: "placement-tracker" as const, label: "Placement Tracker", icon: BriefcaseBusiness },
-    { id: "workspace-generator" as const, label: "+ Create Workspace", icon: Plus }
+    { id: "workspace-generator" as const, label: "Create Workspace", icon: Plus }
   ];
 
   return (
@@ -75,15 +70,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             ))}
           </nav>
-          <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.045] p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Gauge className="h-4 w-4 text-primary" />
-              Phase 1 Core System
-            </div>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Daily goals, placement tracking, protected APIs, offline-aware state, reminders, and analytics.
-            </p>
-          </div>
           <Button variant="ghost" className="mt-6 w-full justify-start" onClick={logout}>
             <LogOut className="h-4 w-4" />
             Log out
@@ -98,7 +84,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Menu className="h-4 w-4" />
                 </Button>
                 <div>
-                  <p className="text-xs font-medium uppercase text-primary">LockedIn OS</p>
                   <h1 className="text-xl font-bold md:text-2xl">
                     {activeTab === "daily-goals"
                       ? "Daily Goals"
@@ -116,14 +101,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="w-full bg-transparent outline-none"
-                  placeholder="Search tasks, companies, descriptions"
+                  placeholder="Search companies, roles, platforms"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="hidden items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-muted-foreground sm:flex">
-                  {isOnline ? <Wifi className="h-3.5 w-3.5 text-accent" /> : <WifiOff className="h-3.5 w-3.5 text-red-300" />}
-                  {isOnline ? "Online" : "Offline"}
-                </span>
                 <Button
                   onClick={() =>
                     setModal(
@@ -170,12 +151,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="container py-6 md:py-8">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Welcome, {user?.name ?? "builder"}</p>
-                <p className="text-sm text-muted-foreground">Stay intentional, ship the next useful action.</p>
-              </div>
-            </div>
             {children}
           </div>
         </section>

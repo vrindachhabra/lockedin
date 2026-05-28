@@ -9,7 +9,7 @@ export const placementSchema = z.object({
   interviewDates: z.array(z.coerce.date()).default([]),
   platform: z.string().min(1),
   testDuration: z.string().min(1),
-  status: z.enum(["wishlist", "applied", "oa-scheduled", "interview", "offer", "rejected"]).default("wishlist"),
+  status: z.enum(["shortlisted", "applied", "oa-scheduled", "interview", "offer", "rejected"]).default("shortlisted"),
   notes: z.string().optional().default(""),
   preparationProgress: z.number().min(0).max(100).default(0),
   dsaTopicsPrepared: z.array(z.string()).default([]),

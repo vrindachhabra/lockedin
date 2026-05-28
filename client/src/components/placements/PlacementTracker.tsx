@@ -1,7 +1,6 @@
-import { ArrowDownUp, CalendarClock, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -9,11 +8,17 @@ import type { Placement, PlacementStatus } from "@/types";
 import { daysUntil, formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
-const statuses: Array<PlacementStatus | "all"> = ["all", "wishlist", "applied", "oa-scheduled", "interview", "offer", "rejected"];
+const statuses: Array<PlacementStatus | "all"> = ["all", "shortlisted", "applied", "oa-scheduled", "interview", "offer", "rejected"];
 
 export function PlacementTracker() {
   const placements = useLockedInStore((state) => state.placements);
   const updatePlacement = useLockedInStore((state) => state.updatePlacement);
+  const deletePlacement = useLockedInStore(
+    (state) => state.deletePlacement
+  );
+  const setModal = useLockedInStore(
+  (state) => state.setModal
+);
   const globalSearch = useLockedInStore((state) => state.search);
   const [localSearch, setLocalSearch] = useState("");
   const [status, setStatus] = useState<PlacementStatus | "all">("all");
@@ -91,7 +96,6 @@ export function PlacementTracker() {
               <option value="applicationDeadline">Deadline</option>
               <option value="oaTestDate">OA date</option>
               <option value="companyName">Company</option>
-              <option value="preparationProgress">Prep progress</option>
             </Select>
           </div>
         </CardHeader>
@@ -110,46 +114,62 @@ export function PlacementTracker() {
                           Deadline {deadline < 0 ? "passed" : `${deadline}d`}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{placement.role} / {placement.package} / {placement.platform}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {[placement.role, placement.package, placement.platform]
+                          .filter((item) => item && item !== "-")
+                          .join(" / ")}
+                      </p>
+
                       <p className="mt-2 text-xs text-muted-foreground">
-                        OA {formatDate(placement.oaTestDate)} / Apply by {formatDate(placement.applicationDeadline)} / {placement.testDuration}
+                        {placement.oaTestDate &&
+                          `OA ${formatDate(placement.oaTestDate)}`}
+
+                        {placement.applicationDeadline &&
+                          placement.applicationDeadline !== placement.oaTestDate &&
+                          ` / Apply by ${formatDate(
+                            placement.applicationDeadline
+                          )}`}
+
+                        {placement.testDuration &&
+                          placement.testDuration !== "-" &&
+                          ` / ${placement.testDuration}`}
                       </p>
                     </div>
-                    <Select
-                      className="w-44"
-                      value={placement.status}
-                      onChange={(event) => updatePlacement(placement.id, { status: event.target.value as PlacementStatus })}
-                    >
-                      {statuses.filter((item) => item !== "all").map((item) => <option key={item} value={item}>{item}</option>)}
-                    </Select>
-                  </div>
-                  <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-                    <div>
-                      <div className="mb-2 flex justify-between text-sm">
-                        <span>Preparation progress</span>
-                        <span>{placement.preparationProgress}%</span>
-                      </div>
-                      <Progress value={placement.preparationProgress} />
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {placement.dsaTopicsPrepared.map((topic) => (
-                          <span key={topic} className="rounded-md bg-white/8 px-2 py-1 text-xs text-muted-foreground">{topic}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-white/[0.04] p-3">
-                      <p className="text-xs text-muted-foreground">Resume</p>
-                      <p className="mt-1 text-sm font-semibold">{placement.resumeVersionUsed}</p>
-                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{placement.externalRemarks || placement.notes}</p>
+                    <div className="flex gap-2">
+                      <Select
+                        className="w-40"
+                        value={placement.status}
+                        onChange={(event) =>
+                          updatePlacement(placement.id, {
+                            status: event.target.value as PlacementStatus
+                          })
+                        }
+                      >
+                        {statuses
+                          .filter((item) => item !== "all")
+                          .map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                      </Select>
+
+                      <button
+                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm transition hover:bg-white/[0.08]"
+                        onClick={() =>
+                          setModal({
+                            type: "edit-placement",
+                            placement
+                          })
+                          }
+                        >
+                          Edit
+                      </button>
                     </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <ArrowDownUp className="h-3.5 w-3.5" />
-            Sorting, filtering, search, analytics, and deadline indicators are active.
-            <CalendarClock className="h-3.5 w-3.5" />
           </div>
         </CardContent>
       </Card>

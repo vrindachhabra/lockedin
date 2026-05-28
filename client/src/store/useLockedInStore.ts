@@ -22,7 +22,15 @@ type Toast = {
   tone?: "success" | "error" | "info";
 };
 
-type ModalType = "task" | "placement" | "workspace" | null;
+type ModalType =
+  | null
+  | "task"
+  | "placement"
+  | "workspace"
+  | {
+      type: "edit-placement";
+      placement: Placement;
+    };
 type ActiveTab = "daily-goals" | "placement-tracker" | "workspace-generator" | `workspace:${string}`;
 
 type LockedInState = {
@@ -52,6 +60,7 @@ type LockedInState = {
   updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
   addPlacement: (placement: Omit<Placement, "id">) => Promise<void>;
   updatePlacement: (id: string, patch: Partial<Placement>) => Promise<void>;
+  deletePlacement: (id: string) => Promise<void>;
   generateWorkspace: (prompt: string) => Promise<void>;
   refineWorkspace: (id: string, instruction: string) => Promise<void>;
   updateWorkspaceSections: (id: string, sections: WorkspaceSection[]) => Promise<void>;
@@ -182,6 +191,40 @@ export const useLockedInStore = create<LockedInState>()(
         } catch {
           set({ placements: previous });
           get().pushToast({ title: "Placement update failed", description: "Your previous state was restored.", tone: "error" });
+        }
+      },
+      deletePlacement: async (id) => {
+        const previous = get().placements;
+
+        const deleted = previous.find(
+          (placement) => placement.id === id
+        );
+
+        set((state) => ({
+          placements: state.placements.filter(
+            (placement) => placement.id !== id
+          )
+        }));
+
+        try {
+          await api.placements.remove(id);
+
+          get().pushToast({
+            title: "Placement deleted",
+            description:
+              deleted?.companyName ||
+              "Company removed",
+            tone: "success"
+          });
+        } catch {
+          set({ placements: previous });
+
+          get().pushToast({
+            title: "Delete failed",
+            description:
+              "Previous data was restored.",
+            tone: "error"
+          });
         }
       },
       generateWorkspace: async (prompt) => {

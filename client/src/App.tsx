@@ -76,8 +76,22 @@ export function App() {
       <Modal open={modal === "placement"} title="Add company application" onClose={() => setModal(null)}>
         <PlacementForm />
       </Modal>
-      <Modal open={modal === "workspace"} title="Create AI workspace" onClose={() => setModal(null)}>
-        <WorkspaceModalForm />
+      <Modal
+        open={Boolean(
+          modal &&
+          typeof modal === "object" &&
+          modal.type === "edit-placement"
+        )}
+        title="Edit company application"
+        onClose={() => setModal(null)}
+      >
+        {modal &&
+          typeof modal === "object" &&
+          modal.type === "edit-placement" && (
+            <PlacementForm
+              placement={modal.placement}
+            />
+        )}
       </Modal>
       <ToastViewport />
     </>

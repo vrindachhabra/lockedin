@@ -124,7 +124,7 @@ export const seedPlacements = [
     interviewDates: [plusDays(18), plusDays(20)],
     platform: "HirePro",
     testDuration: "75 minutes",
-    status: "wishlist",
+    status: "shortlisted",
     notes: "Prepare React performance and UI system questions.",
     preparationProgress: 41,
     dsaTopicsPrepared: ["Strings", "Sliding Window"],

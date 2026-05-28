@@ -3,7 +3,7 @@ export type TaskStatus = "todo" | "in-progress" | "done";
 export type TaskSchedule = "today" | "tomorrow" | "future" | "weekend" | "recurring";
 export type TaskView = "list" | "kanban" | "calendar";
 export type TaskFilter = "today" | "upcoming" | "overdue" | "completed" | "high" | "all";
-export type PlacementStatus = "wishlist" | "applied" | "oa-scheduled" | "interview" | "offer" | "rejected";
+export type PlacementStatus = "shortlisted" | "applied" | "oa-scheduled" | "interview" | "offer" | "rejected";
 
 export type User = {
   id: string;

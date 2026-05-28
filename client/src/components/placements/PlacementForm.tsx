@@ -2,102 +2,240 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { toInputDate } from "@/lib/date";
+import type { Placement, PlacementStatus } from "@/types";
 
 const schema = z.object({
-  companyName: z.string().min(2),
-  role: z.string().min(2),
-  package: z.string().min(1),
-  oaTestDate: z.string().min(1),
-  applicationDeadline: z.string().min(1),
-  interviewDates: z.string().optional(),
-  platform: z.string().min(1),
-  testDuration: z.string().min(1),
-  status: z.enum(["wishlist", "applied", "oa-scheduled", "interview", "offer", "rejected"]),
-  notes: z.string(),
-  preparationProgress: z.coerce.number().min(0).max(100),
-  dsaTopicsPrepared: z.string(),
-  resumeVersionUsed: z.string(),
-  externalRemarks: z.string()
+  companyName: z.string().min(2, "Company name is required"),
+  oaTestDate: z.string().min(1, "Date is required"),
+
+  role: z.string().optional(),
+  package: z.string().optional(),
+  platform: z.string().optional(),
+  testDuration: z.string().optional(),
+  externalRemarks: z.string().optional()
 });
 
 type Values = z.infer<typeof schema>;
 
 const defaults: Values = {
   companyName: "",
+  oaTestDate: toInputDate(new Date()),
+
   role: "",
   package: "",
-  oaTestDate: toInputDate(new Date()),
-  applicationDeadline: toInputDate(new Date()),
-  interviewDates: "",
   platform: "HackerRank",
   testDuration: "90 minutes",
-  status: "wishlist",
-  notes: "",
-  preparationProgress: 0,
-  dsaTopicsPrepared: "",
-  resumeVersionUsed: "resume-v1",
   externalRemarks: ""
 };
 
-export function PlacementForm() {
-  const addPlacement = useLockedInStore((state) => state.addPlacement);
-  const setModal = useLockedInStore((state) => state.setModal);
-  const { draft, setDraft, clearDraft } = useAutosaveDraft<Values>("lockedin.placement-draft", defaults);
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: draft });
-  const watched = useWatch({ control: form.control });
+export function PlacementForm({
+    placement
+  }: {
+    placement?: Placement;
+  }) {
+  const addPlacement = useLockedInStore(
+    (state) => state.addPlacement
+  );
+  const updatePlacement = useLockedInStore(
+    (state) => state.updatePlacement
+  );
+  const deletePlacement = useLockedInStore(
+    (state) => state.deletePlacement
+  );
+  const setModal = useLockedInStore(
+    (state) => state.setModal
+  );
 
-  useEffect(() => setDraft({ ...defaults, ...watched }), [setDraft, watched]);
+  const { draft, setDraft, clearDraft } =
+    useAutosaveDraft<Values>(
+      "lockedin.placement-draft",
+      defaults
+    );
+
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: placement
+  ? {
+      companyName: placement.companyName,
+      oaTestDate: toInputDate(
+        new Date(placement.oaTestDate)
+      ),
+
+      role:
+        placement.role === "-"
+          ? ""
+          : placement.role,
+
+      package:
+        placement.package === "-"
+          ? ""
+          : placement.package,
+
+      platform:
+        placement.platform === "-"
+          ? ""
+          : placement.platform,
+
+      testDuration:
+        placement.testDuration === "-"
+          ? ""
+          : placement.testDuration,
+
+      externalRemarks:
+        placement.externalRemarks || ""
+    }
+  : draft
+  });
+
+  const watched = useWatch({
+    control: form.control
+  });
+
+  useEffect(() => {
+    setDraft({
+      ...defaults,
+      ...watched
+    });
+  }, [setDraft, watched]);
 
   const onSubmit = async (values: Values) => {
-    await addPlacement({
-      ...values,
-      oaTestDate: new Date(values.oaTestDate).toISOString(),
-      applicationDeadline: new Date(values.applicationDeadline).toISOString(),
-      interviewDates: values.interviewDates
-        ? values.interviewDates.split(",").map((date) => new Date(date.trim()).toISOString())
-        : [],
-      dsaTopicsPrepared: values.dsaTopicsPrepared.split(",").map((topic) => topic.trim()).filter(Boolean)
-    });
+    const placementData = {
+      companyName: values.companyName,
+
+      role: values.role || "-",
+
+      package: values.package || "-",
+
+      platform: values.platform || "-",
+
+      testDuration:
+        values.testDuration || "-",
+
+      oaTestDate: new Date(
+        values.oaTestDate
+      ).toISOString(),
+
+      applicationDeadline: new Date(
+        values.oaTestDate
+      ).toISOString(),
+
+      externalRemarks:
+        values.externalRemarks || "",
+
+      status: placement?.status || "oa-scheduled",
+
+      interviewDates: [],
+
+      notes: "",
+
+      preparationProgress: 0,
+
+      dsaTopicsPrepared: [],
+
+      resumeVersionUsed: ""
+    };
+
+    if (placement) {
+      updatePlacement(
+        placement.id,
+        placementData
+      );
+    } else {
+      await addPlacement(placementData);
+    }
+
     clearDraft();
     setModal(null);
   };
-
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="space-y-4"
+    >
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input placeholder="Company" {...form.register("companyName")} />
-        <Input placeholder="Role" {...form.register("role")} />
-        <Input placeholder="Package" {...form.register("package")} />
-        <Input placeholder="Platform" {...form.register("platform")} />
-        <Input type="date" {...form.register("oaTestDate")} />
-        <Input type="date" {...form.register("applicationDeadline")} />
-        <Input placeholder="Interview dates, comma separated" {...form.register("interviewDates")} />
-        <Input placeholder="Test duration" {...form.register("testDuration")} />
-        <Select {...form.register("status")}>
-          <option value="wishlist">Wishlist</option>
-          <option value="applied">Applied</option>
-          <option value="oa-scheduled">OA scheduled</option>
-          <option value="interview">Interview</option>
-          <option value="offer">Offer</option>
-          <option value="rejected">Rejected</option>
-        </Select>
-        <Input type="number" placeholder="Preparation progress" {...form.register("preparationProgress")} />
-        <Input placeholder="Resume version used" {...form.register("resumeVersionUsed")} />
-        <Input placeholder="DSA topics, comma separated" {...form.register("dsaTopicsPrepared")} />
+        <Input
+          placeholder="Company *"
+          {...form.register("companyName")}
+        />
+
+        <Input
+          type="date"
+          {...form.register("oaTestDate")}
+        />
+
+        <Input
+          placeholder="Role"
+          {...form.register("role")}
+        />
+
+        <Input
+          placeholder="Package"
+          {...form.register("package")}
+        />
+
+        <Input
+          placeholder="Platform"
+          {...form.register("platform")}
+        />
+
+        <Input
+          placeholder="Test duration"
+          {...form.register("testDuration")}
+        />
       </div>
-      <Textarea placeholder="Notes" {...form.register("notes")} />
-      <Textarea placeholder="External remarks" {...form.register("externalRemarks")} />
-      {form.formState.errors.companyName && <p className="text-xs text-red-300">Company and role are required.</p>}
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
-        <Button type="submit">Add company</Button>
+
+      <Textarea
+        placeholder="External remarks"
+        className="min-h-[90px]"
+        {...form.register("externalRemarks")}
+      />
+
+      {(form.formState.errors.companyName ||
+        form.formState.errors.oaTestDate) && (
+        <p className="text-xs text-red-300">
+          Company name and date are required.
+        </p>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        {placement ? (
+          <Button
+            type="button"
+            className="bg-red-500/20 text-red-300 hover:bg-red-500/30"
+            onClick={async () => {
+              await deletePlacement(placement.id);
+              setModal(null);
+            }}
+          >
+            Delete
+          </Button>
+        ) : (
+          <div />
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setModal(null)}
+          >
+            Cancel
+          </Button>
+
+          <Button type="submit">
+            {placement
+              ? "Save changes"
+              : "Add company"}
+          </Button>
+        </div>
       </div>
     </form>
   );
