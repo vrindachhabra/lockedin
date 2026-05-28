@@ -1,12 +1,14 @@
+import { useState, useEffect } from "react";
 import {
-  Bell,
   BriefcaseBusiness,
   CalendarCheck2,
   FolderKanban,
   LogOut,
   Menu,
+  Moon,
   Plus,
   Search,
+  Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -20,6 +22,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const setSearch = useLockedInStore((state) => state.setSearch);
   const workspaces = useLockedInStore((state) => state.workspaces);
   const logout = useLockedInStore((state) => state.logout);
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('light') ? 'light' : 'dark';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light');
+      setTheme('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      setTheme('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.remove('light');
+      localStorage.setItem('theme', 'dark');
+    }
+  };
 
   const tabs = [
     { id: "daily-goals" as const, label: "Daily Goals", icon: CalendarCheck2 },
@@ -95,33 +127,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </h1>
                 </div>
               </div>
-              <div className="hidden h-10 min-w-80 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.055] px-3 text-sm text-muted-foreground md:flex">
-                <Search className="h-4 w-4" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="w-full bg-transparent outline-none"
-                  placeholder="Search companies, roles, platforms"
-                />
-              </div>
               <div className="flex items-center gap-2">
-                <Button
-                  onClick={() =>
-                    setModal(
-                      activeTab === "daily-goals"
-                        ? "task"
-                        : activeTab === "placement-tracker"
-                          ? "placement"
-                          : "workspace"
-                    )
-                  }
-                  size="icon"
-                  aria-label="Quick add"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button variant="secondary" size="icon" aria-label="Notifications">
-                  <Bell className="h-4 w-4" />
+                <div className="hidden h-10 min-w-80 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.055] px-3 text-sm text-muted-foreground md:flex">
+                  <Search className="h-4 w-4" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="w-full bg-transparent outline-none"
+                    placeholder={activeTab === "placement-tracker" ? "Search companies, roles, platforms" : "Search tasks"}
+                  />
+                </div>
+                {activeTab !== "daily-goals" && activeTab !== "placement-tracker" && (
+                  <Button
+                    onClick={() => setModal("workspace")}
+                    size="icon"
+                    aria-label="Quick add"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button variant="secondary" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
               </div>
             </div>

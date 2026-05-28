@@ -1,10 +1,9 @@
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, CheckCircle2, Columns3, ListChecks, Tag } from "lucide-react";
+import { Columns3, ListChecks, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { Select } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -15,25 +14,29 @@ import { cn } from "@/lib/utils";
 const filters = [
   ["today", "Today"],
   ["upcoming", "Upcoming"],
-  ["overdue", "Overdue"],
-  ["completed", "Completed"],
-  ["high", "High Priority"],
-  ["all", "All"]
+  ["some-time", "Someday"]
 ] as const;
 
-function useFilteredTasks() {
+function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
   const tasks = useLockedInStore((state) => state.tasks);
-  const filter = useLockedInStore((state) => state.taskFilter);
+  const rawFilter = useLockedInStore((state) => state.taskFilter);
   const search = useDebounce(useLockedInStore((state) => state.search));
+
+  const filter = ["today", "upcoming", "some-time"].includes(rawFilter) ? rawFilter : "today";
 
   return tasks.filter((task) => {
     const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
+
+    // Filter by mutually exclusive category filter
+    if (activeCategory !== "All") {
+      const taskCategory = (task.category || "Personal").toLowerCase();
+      if (taskCategory !== activeCategory.toLowerCase()) return false;
+    }
+
     if (filter === "today") return isToday(task.dueDate);
-    if (filter === "upcoming") return new Date(task.dueDate) >= new Date() && !task.completed;
-    if (filter === "overdue") return isOverdue(task.dueDate) && !task.completed;
-    if (filter === "completed") return task.completed;
-    if (filter === "high") return task.priority === "high";
+    if (filter === "upcoming") return new Date(task.dueDate) > new Date() && !isToday(task.dueDate);
+    if (filter === "some-time") return isOverdue(task.dueDate) && !isToday(task.dueDate) && !task.completed;
     return true;
   });
 }
@@ -99,31 +102,33 @@ function KanbanView({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function CalendarView({ tasks }: { tasks: Task[] }) {
-  const days = [...new Map(tasks.map((task) => [formatDate(task.dueDate), task.dueDate])).entries()];
-  return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {days.map(([label, date]) => (
-        <div key={label} className="rounded-xl border border-white/8 bg-white/[0.035] p-4">
-          <p className="mb-3 text-sm font-semibold">{label}</p>
-          <div className="space-y-2">
-            {tasks.filter((task) => formatDate(task.dueDate) === formatDate(date)).map((task) => (
-              <div key={task.id} className="rounded-lg bg-white/[0.05] p-2 text-sm">{task.title}</div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+
 
 export function DailyGoals() {
-  const tasks = useFilteredTasks();
+  const [activeCategory, setActiveCategory] = useState<"All" | "Personal" | "Routine">("All");
+  const tasks = useFilteredTasks(activeCategory);
+  
   const taskView = useLockedInStore((state) => state.taskView);
+  const activeTaskView = taskView === "calendar" ? "list" : taskView;
   const setTaskView = useLockedInStore((state) => state.setTaskView);
-  const taskFilter = useLockedInStore((state) => state.taskFilter);
+  const rawFilter = useLockedInStore((state) => state.taskFilter);
   const setTaskFilter = useLockedInStore((state) => state.setTaskFilter);
-  const categories = useLockedInStore((state) => state.settings.categories);
+  const setModal = useLockedInStore((state) => state.setModal);
+  const updateTask = useLockedInStore((state) => state.updateTask);
+
+  const rollOverTodayTasks = () => {
+    const todayUncompleted = tasks.filter(t => !t.completed);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString();
+    
+    todayUncompleted.forEach(task => {
+      updateTask(task.id, { dueDate: tomorrowStr });
+    });
+  };
+  
+  const activeFilter = ["today", "upcoming", "some-time"].includes(rawFilter) ? rawFilter : "today";
+  
   const completed = tasks.filter((task) => task.completed).length;
   const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
 
@@ -131,42 +136,103 @@ export function DailyGoals() {
     <section className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Daily command center</CardTitle>
+          <CardTitle>Tasks</CardTitle>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setTaskView("list")}><ListChecks className="h-4 w-4" /> List</Button>
-            <Button variant="secondary" size="sm" onClick={() => setTaskView("kanban")}><Columns3 className="h-4 w-4" /> Kanban</Button>
-            <Button variant="secondary" size="sm" onClick={() => setTaskView("calendar")}><CalendarDays className="h-4 w-4" /> Calendar</Button>
+            <Button variant="secondary" size="sm" onClick={() => setTaskView("kanban")}><Columns3 className="h-4 w-4" /> Action Board</Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_15rem]">
-            <Tabs value={taskFilter} onValueChange={(value) => setTaskFilter(value as typeof taskFilter)}>
-              <TabsList className="flex max-w-full flex-wrap">
-                {filters.map(([id, label]) => <TabsTrigger key={id} value={id}>{label}</TabsTrigger>)}
-              </TabsList>
-            </Tabs>
-            <Select onChange={(event) => setTaskFilter(event.target.value ? "all" : taskFilter)} aria-label="Category filter">
-              <option value="">Categories</option>
-              {categories.map((category) => <option key={category}>{category}</option>)}
-            </Select>
-          </div>
-          <div className="mb-5 rounded-lg border border-white/8 bg-white/[0.035] p-4">
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-accent" /> Completion tracking</span>
-              <span>{completed}/{tasks.length} done</span>
+          <div className="mb-6 flex flex-col gap-4 border-b border-white/8 pb-6 lg:flex-row lg:items-center lg:justify-between">
+            {/* Left: Tab selectors & Category Toggles */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Tabs value={activeFilter} onValueChange={(value) => setTaskFilter(value as any)}>
+                <TabsList className="flex bg-white/5 border border-white/8 p-1">
+                  {filters.map(([id, label]) => (
+                    <TabsTrigger key={id} value={id}>
+                      {label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              
+              <div className="flex items-center gap-2 border-l border-white/8 pl-4">
+                <button
+                  onClick={() => setActiveCategory("All")}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
+                    activeCategory === "All"
+                      ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveCategory("Personal")}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
+                    activeCategory === "Personal"
+                      ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  )}
+                >
+                  Personal
+                </button>
+                <button
+                  onClick={() => setActiveCategory("Routine")}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
+                    activeCategory === "Routine"
+                      ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  )}
+                >
+                  Routine
+                </button>
+              </div>
+
+              {activeFilter === "today" && tasks.some(t => !t.completed) && (
+                <Button
+                  onClick={rollOverTodayTasks}
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full px-4 py-1.5 text-xs font-semibold border border-primary/25 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-[0_0_12px_rgba(var(--primary-rgb),0.02)]"
+                >
+                  Move undone to tomorrow
+                </Button>
+              )}
             </div>
-            <Progress value={progress} />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {categories.slice(0, 5).map((category) => (
-                <span key={category} className="flex items-center gap-1 rounded-md bg-white/8 px-2 py-1 text-xs text-muted-foreground">
-                  <Tag className="h-3 w-3" /> {category}
-                </span>
-              ))}
+
+            {/* Right: Inline Sleek Progress Bar & Plus Button */}
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-[220px] flex-col gap-1.5 lg:w-72">
+                <div className="flex justify-between text-xs font-medium">
+                  <span className="text-muted-foreground capitalize">
+                    {activeFilter === "some-time" ? "Progress" : `${activeFilter} Progress`}
+                  </span>
+                  <span className="text-foreground font-semibold">{completed}/{tasks.length} done ({progress}%)</span>
+                </div>
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/5 border border-white/8">
+                  <div 
+                    className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" 
+                    style={{ width: `${progress}%` }} 
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={() => setModal("task")}
+                size="icon"
+                aria-label="Quick add task"
+                className="shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          {taskView === "list" && <ListView tasks={tasks} />}
-          {taskView === "kanban" && <KanbanView tasks={tasks} />}
-          {taskView === "calendar" && <CalendarView tasks={tasks} />}
+
+          {activeTaskView === "list" && <ListView tasks={tasks} />}
+          {activeTaskView === "kanban" && <KanbanView tasks={tasks} />}
         </CardContent>
       </Card>
     </section>

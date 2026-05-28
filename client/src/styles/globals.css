@@ -21,6 +21,22 @@
     --destructive: 0 84% 64%;
   }
 
+  :root.light, .light {
+    color-scheme: light;
+    --background: 220 20% 97%;
+    --foreground: 224 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 30% 12%;
+    --primary: 198 94% 42%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 220 15% 91%;
+    --muted-foreground: 220 12% 43%;
+    --border: 220 15% 88%;
+    --accent: 154 76% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 54%;
+  }
+
   * {
     @apply border-border;
   }
@@ -55,4 +71,105 @@
     background-size: 48px 48px;
     mask-image: linear-gradient(to bottom, black, transparent 84%);
   }
+
+  /* Soothing Light Mode Overrides for Hardcoded White/Black Opacity elements */
+  .light .glass {
+    background: hsl(0 0% 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 24px 90px rgba(0, 0, 0, 0.04) !important;
+    backdrop-filter: none !important;
+  }
+
+  .light .surface-line {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.015) 1px, transparent 1px);
+  }
+
+  .light .bg-white\/\[0\.02\] {
+    background-color: rgba(0, 0, 0, 0.015) !important;
+  }
+  .light .bg-white\/5 {
+    background-color: rgba(0, 0, 0, 0.035) !important;
+  }
+  .light .bg-white\/\[0\.025\] {
+    background-color: rgba(0, 0, 0, 0.015) !important;
+  }
+  .light .bg-white\/\[0\.035\] {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+  .light .bg-white\/\[0\.04\] {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+  }
+  .light .bg-white\/\[0\.05\] {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+  }
+  .light .bg-white\/\[0\.055\] {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+  .light .bg-white\/\[0\.09\] {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  .light .border-white\/8 {
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+  .light .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.07) !important;
+  }
+  .light .text-muted-foreground {
+    color: hsl(220 12% 43%) !important;
+  }
+  .light .text-white {
+    color: hsl(224 30% 12%) !important;
+  }
+  .light .bg-black {
+    background-color: hsl(220 20% 97%) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+  .light .bg-black\/95 {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  }
+  .light .bg-black\/90 {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  }
+  .light .bg-black\/25 {
+    background-color: rgba(255, 255, 255, 0.4) !important;
+  }
+  .light .hover\:bg-white\/8:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  .light .hover\:bg-white\/5:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+  .light .bg-white\/10 {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  .light .text-emerald-400 {
+    color: hsl(154 76% 35%) !important;
+  }
+  .light input {
+    color: hsl(224 30% 12%) !important;
+  }
+  .light input::placeholder {
+    color: hsl(220 12% 55%) !important;
+  }
+  .light .bg-zinc-950\/80 {
+    background-color: hsl(0 0% 100%) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+  .light .bg-white\/\[0\.06\] {
+    background-color: rgba(0, 0, 0, 0.035) !important;
+  }
+  .light .text-red-300 {
+    color: hsl(0 84% 45%) !important;
+  }
+  .light .bg-red-500\/20 {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+  }
+  .light .hover\:bg-red-500\/30:hover {
+    background-color: rgba(239, 68, 68, 0.18) !important;
+  }
 }
+

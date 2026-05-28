@@ -17,7 +17,7 @@ export const seedTasks = [
     id: "task-1",
     title: "Solve 5 graph problems",
     description: "Focus on BFS, DFS, and shortest path variations.",
-    category: "DSA",
+    category: "Routine",
     priority: "high",
     dueDate: plusDays(0),
     deadline: plusDays(0),
@@ -30,7 +30,7 @@ export const seedTasks = [
     id: "task-2",
     title: "Update resume project impact bullets",
     description: "Rewrite metrics for LockedIn and LMS project.",
-    category: "Placement",
+    category: "Personal",
     priority: "high",
     dueDate: plusDays(1),
     deadline: plusDays(3),
@@ -43,7 +43,7 @@ export const seedTasks = [
     id: "task-3",
     title: "Weekly reset and calendar planning",
     description: "Plan deep work, life admin, and revision blocks.",
-    category: "Planning",
+    category: "Routine",
     priority: "medium",
     dueDate: plusDays(6),
     schedule: "weekend",
@@ -55,7 +55,7 @@ export const seedTasks = [
     id: "task-4",
     title: "Read DBMS indexes notes",
     description: "Revise B+ trees and query optimization.",
-    category: "Core CS",
+    category: "Routine",
     priority: "medium",
     dueDate: plusDays(-1),
     deadline: plusDays(0),
@@ -156,6 +156,6 @@ export const dashboardSeed = {
     browserReminders: true,
     dailyReviewTime: "21:00",
     defaultTaskView: "list",
-    categories: ["DSA", "Placement", "Planning", "Core CS", "Routine", "Personal"]
+    categories: ["Personal", "Routine"]
   }
 };

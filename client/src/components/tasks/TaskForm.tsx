@@ -25,7 +25,7 @@ type Values = z.infer<typeof schema>;
 const defaults: Values = {
   title: "",
   description: "",
-  category: "DSA",
+  category: "Personal",
   priority: "medium",
   dueDate: toInputDate(new Date()),
   deadline: "",

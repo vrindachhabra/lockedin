@@ -1,7 +1,8 @@
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import type { Placement, PlacementStatus } from "@/types";
@@ -79,7 +80,7 @@ export function PlacementTracker() {
       <Card>
         <CardHeader>
           <CardTitle>Company applications</CardTitle>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <div className="flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.055] px-3">
               <Search className="h-4 w-4 text-muted-foreground" />
               <input
@@ -92,11 +93,14 @@ export function PlacementTracker() {
             <Select className="w-40" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}>
               {statuses.map((item) => <option key={item} value={item}>{item}</option>)}
             </Select>
-            <Select className="w-44" value={sort} onChange={(event) => setSort(event.target.value as keyof Placement)}>
-              <option value="applicationDeadline">Deadline</option>
-              <option value="oaTestDate">OA date</option>
-              <option value="companyName">Company</option>
-            </Select>
+            <Button
+              onClick={() => setModal("placement")}
+              size="icon"
+              aria-label="Add company"
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
