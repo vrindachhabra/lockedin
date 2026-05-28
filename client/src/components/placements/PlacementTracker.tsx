@@ -32,17 +32,43 @@ export function PlacementTracker() {
   const stats = {
     offers: placements.filter((placement) => placement.status === "offer").length,
     interviews: placements.filter((placement) => placement.status === "interview").length,
-    deadlines: placements.filter((placement) => daysUntil(placement.applicationDeadline) <= 7).length,
-    average: placements.length ? Math.round(placements.reduce((sum, placement) => sum + placement.preparationProgress, 0) / placements.length) : 0
+    deadlines: placements.filter(
+      (placement) => daysUntil(placement.applicationDeadline) <= 7
+    ).length,
   };
 
   return (
     <section className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-4"><p className="text-xs text-muted-foreground">Offers</p><p className="mt-2 text-2xl font-bold">{stats.offers}</p></Card>
-        <Card className="p-4"><p className="text-xs text-muted-foreground">Interviews</p><p className="mt-2 text-2xl font-bold">{stats.interviews}</p></Card>
-        <Card className="p-4"><p className="text-xs text-muted-foreground">Deadlines this week</p><p className="mt-2 text-2xl font-bold">{stats.deadlines}</p></Card>
-        <Card className="p-4"><p className="text-xs text-muted-foreground">Avg prep</p><p className="mt-2 text-2xl font-bold">{stats.average}%</p></Card>
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
+            Offers
+          </p>
+
+          <p className="mt-1 text-xl font-bold">
+            {stats.offers}
+          </p>
+        </Card>
+
+        <Card className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
+            Interviews
+          </p>
+
+          <p className="mt-1 text-xl font-bold">
+            {stats.interviews}
+          </p>
+        </Card>
+
+        <Card className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
+            Deadlines
+          </p>
+
+          <p className="mt-1 text-xl font-bold">
+            {stats.deadlines}
+          </p>
+        </Card>
       </div>
 
       <Card>
