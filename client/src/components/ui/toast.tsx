@@ -1,4 +1,5 @@
 import { CheckCircle2, Info, X, XCircle } from "lucide-react";
+import {useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
 
@@ -11,6 +12,18 @@ const icons = {
 export function ToastViewport() {
   const toasts = useLockedInStore((state) => state.toasts);
   const dismiss = useLockedInStore((state) => state.dismissToast);
+  useEffect(() => {
+    if (!toasts.length) return;
+
+    const latestToast =
+      toasts[toasts.length - 1];
+
+    const timer = setTimeout(() => {
+      dismiss(latestToast.id);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [toasts, dismiss]);
 
   return (
     <div className="fixed bottom-4 right-4 z-[70] w-[min(24rem,calc(100vw-2rem))] space-y-3">

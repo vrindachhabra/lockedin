@@ -31,8 +31,8 @@ const defaults: Values = {
 
   role: "",
   package: "",
-  platform: "HackerRank",
-  testDuration: "90 minutes",
+  platform: "",
+  testDuration: "",
   externalRemarks: ""
 };
 
@@ -130,7 +130,9 @@ export function PlacementForm({
       externalRemarks:
         values.externalRemarks || "",
 
-      status: placement?.status || "oa-scheduled",
+      status: (
+        placement?.status || "oa-scheduled"
+      ) as PlacementStatus,
 
       interviewDates: [],
 
@@ -144,7 +146,7 @@ export function PlacementForm({
     };
 
     if (placement) {
-      updatePlacement(
+      await updatePlacement(
         placement.id,
         placementData
       );
@@ -153,6 +155,7 @@ export function PlacementForm({
     }
 
     clearDraft();
+    form.reset(defaults);
     setModal(null);
   };
   return (
