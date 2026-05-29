@@ -208,37 +208,20 @@ export function PlacementForm({
         </p>
       )}
 
-      <div className="flex items-center justify-between gap-2">
-        {placement ? (
-          <Button
-            type="button"
-            className="bg-red-500/20 text-red-300 hover:bg-red-500/30"
-            onClick={async () => {
-              await deletePlacement(placement.id);
-              setModal(null);
-            }}
-          >
-            Delete
-          </Button>
-        ) : (
-          <div />
-        )}
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setModal(null)}
+        >
+          Cancel
+        </Button>
 
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setModal(null)}
-          >
-            Cancel
-          </Button>
-
-          <Button type="submit">
-            {placement
-              ? "Save changes"
-              : "Add company"}
-          </Button>
-        </div>
+        <Button type="submit">
+          {placement
+            ? "Save changes"
+            : "Add company"}
+        </Button>
       </div>
     </form>
   );

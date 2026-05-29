@@ -30,6 +30,10 @@ type ModalType =
   | {
       type: "edit-placement";
       placement: Placement;
+    }
+  | {
+      type: "edit-task";
+      task: Task;
     };
 type ActiveTab = "daily-goals" | "placement-tracker" | "workspace-generator" | `workspace:${string}`;
 
@@ -58,6 +62,7 @@ type LockedInState = {
   loadDashboard: () => Promise<void>;
   addTask: (task: Omit<Task, "id">) => Promise<void>;
   updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   addPlacement: (placement: Omit<Placement, "id">) => Promise<void>;
   updatePlacement: (id: string, patch: Partial<Placement>) => Promise<void>;
   deletePlacement: (id: string) => Promise<void>;
@@ -168,6 +173,28 @@ export const useLockedInStore = create<LockedInState>()(
         } catch {
           set({ tasks: previous });
           get().pushToast({ title: "Task update failed", description: "Your previous state was restored.", tone: "error" });
+        }
+      },
+      deleteTask: async (id) => {
+        const previous = get().tasks;
+        const deleted = previous.find((task) => task.id === id);
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== id)
+        }));
+        try {
+          await api.tasks.remove(id);
+          get().pushToast({
+            title: "Task deleted",
+            description: deleted?.title || "Task removed",
+            tone: "success"
+          });
+        } catch {
+          set({ tasks: previous });
+          get().pushToast({
+            title: "Delete failed",
+            description: "Previous data was restored.",
+            tone: "error"
+          });
         }
       },
       addPlacement: async (placement) => {

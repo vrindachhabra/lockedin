@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { cn } from "@/lib/utils";
+import { PlacementGrowthTree } from "@/components/placements/PlacementGrowthTree";
 
 export function SummaryDashboard() {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -100,14 +101,10 @@ export function SummaryDashboard() {
         </Card>
 
         {isPlacementTracker ? (
-          /* Landscape motivational image spanning 2 columns */
-          <Card className="h-[220px] col-span-1 md:col-span-2 relative flex items-center justify-center overflow-hidden rounded-2xl bg-black border border-white/8 hover:bg-black/90 transition-all duration-300">
-            <img 
-              src="/quote.png" 
-              alt="Motivation: The day you plant the seed is not the day you eat the fruit." 
-              className="w-full h-full object-cover opacity-85 hover:opacity-100 transition-opacity duration-300"
-            />
-          </Card>
+          /* Landscape Placement Growth Tree spanning 2 columns */
+          <div className="h-[220px] col-span-1 md:col-span-2">
+            <PlacementGrowthTree />
+          </div>
         ) : (
           <>
             {/* Column 2: Mini Calendar */}

@@ -73,6 +73,23 @@ export function App() {
       <Modal open={modal === "task"} title="Quick add task" onClose={() => setModal(null)}>
         <TaskForm />
       </Modal>
+      <Modal
+        open={Boolean(
+          modal &&
+          typeof modal === "object" &&
+          modal.type === "edit-task"
+        )}
+        title="Edit task"
+        onClose={() => setModal(null)}
+      >
+        {modal &&
+          typeof modal === "object" &&
+          modal.type === "edit-task" && (
+            <TaskForm
+              task={modal.task}
+            />
+        )}
+      </Modal>
       <Modal open={modal === "placement"} title="Add company application" onClose={() => setModal(null)}>
         <PlacementForm />
       </Modal>

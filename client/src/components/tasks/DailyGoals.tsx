@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Columns3, ListChecks, Plus } from "lucide-react";
+import { Columns3, ListChecks, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,6 +43,8 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
 
 function TaskRow({ task }: { task: Task }) {
   const updateTask = useLockedInStore((state) => state.updateTask);
+  const deleteTask = useLockedInStore((state) => state.deleteTask);
+  const setModal = useLockedInStore((state) => state.setModal);
   return (
     <motion.div
       layout
@@ -59,9 +61,30 @@ function TaskRow({ task }: { task: Task }) {
           {task.deadline ? ` / Deadline ${formatDate(task.deadline)}` : ""} / {task.recurrence}
         </p>
       </div>
-      <span className={cn("rounded-md px-2 py-1 text-xs capitalize", task.priority === "high" ? "bg-red-400/10 text-red-300" : "bg-white/8 text-muted-foreground")}>
-        {task.priority}
-      </span>
+      
+      {/* Edit and Delete Buttons on the right-hand side */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-muted-foreground transition hover:bg-white/[0.08] hover:text-foreground"
+          onClick={() =>
+            setModal({
+              type: "edit-task",
+              task
+            })
+          }
+          aria-label="Edit task"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+
+        <button
+          className="rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-red-400 transition hover:bg-red-500/25 hover:text-red-300"
+          onClick={() => deleteTask(task.id)}
+          aria-label="Delete task"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </motion.div>
   );
 }

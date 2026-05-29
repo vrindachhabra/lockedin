@@ -1,4 +1,4 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -139,7 +139,7 @@ export function PlacementTracker() {
                           ` / ${placement.testDuration}`}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <Select
                         className="w-40"
                         value={placement.status}
@@ -159,15 +159,24 @@ export function PlacementTracker() {
                       </Select>
 
                       <button
-                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm transition hover:bg-white/[0.08]"
+                        className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-muted-foreground transition hover:bg-white/[0.08] hover:text-foreground"
                         onClick={() =>
                           setModal({
                             type: "edit-placement",
                             placement
                           })
-                          }
-                        >
-                          Edit
+                        }
+                        aria-label="Edit placement"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        className="rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-red-400 transition hover:bg-red-500/25 hover:text-red-300"
+                        onClick={() => deletePlacement(placement.id)}
+                        aria-label="Delete placement"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
