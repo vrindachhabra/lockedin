@@ -28,15 +28,14 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
     const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
 
-    // Filter by mutually exclusive category filter
     if (activeCategory !== "All") {
       const taskCategory = (task.category || "Personal").toLowerCase();
       if (taskCategory !== activeCategory.toLowerCase()) return false;
     }
 
-    if (filter === "today") return isToday(task.dueDate);
-    if (filter === "upcoming") return new Date(task.dueDate) > new Date() && !isToday(task.dueDate);
-    if (filter === "some-time") return isOverdue(task.dueDate) && !isToday(task.dueDate) && !task.completed;
+    if (filter === "today") return task.dueDate ? isToday(task.dueDate) : false;
+    if (filter === "upcoming") return task.dueDate ? (new Date(task.dueDate) > new Date() && !isToday(task.dueDate)) : false;
+    if (filter === "some-time") return (!task.dueDate && !task.completed) || (task.dueDate ? (isOverdue(task.dueDate) && !isToday(task.dueDate) && !task.completed) : false);
     return true;
   });
 }
@@ -53,16 +52,16 @@ function TaskRow({ task }: { task: Task }) {
       exit={{ opacity: 0, x: -20 }}
       className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/[0.035] p-3"
     >
-      <Checkbox checked={task.completed} onCheckedChange={() => updateTask(task.id, { completed: !task.completed })} />
+      <Checkbox checked={task.completed} onCheckedChange={() => updateTask(task.id, { completed: !task.completed }, { silent: true })} />
       <div className="min-w-0 flex-1">
         <p className={cn("truncate text-sm font-semibold", task.completed && "text-muted-foreground line-through")}>{task.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {task.category} / Doing {formatDate(task.dueDate)}
-          {task.deadline ? ` / Deadline ${formatDate(task.deadline)}` : ""} / {task.recurrence}
+          {task.category} {task.dueDate ? `/ ${formatDate(task.dueDate)}` : "/ Someday"}
+          {task.deadline ? ` / Deadline ${formatDate(task.deadline)}` : ""}
+          {task.recurrence && task.recurrence !== "none" ? ` / ${task.recurrence}` : ""}
         </p>
       </div>
-      
-      {/* Edit and Delete Buttons on the right-hand side */}
+
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-muted-foreground transition hover:bg-white/[0.08] hover:text-foreground"
@@ -91,7 +90,7 @@ function TaskRow({ task }: { task: Task }) {
 
 function ListView({ tasks }: { tasks: Task[] }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-h-64 overflow-y-auto pr-2 visible-scrollbar">
       <AnimatePresence>
         {tasks.map((task) => <TaskRow key={task.id} task={task} />)}
       </AnimatePresence>
@@ -99,24 +98,34 @@ function ListView({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function KanbanView({ tasks }: { tasks: Task[] }) {
+function KanbanView({ tasks, interactive = false }: { tasks: Task[]; interactive?: boolean }) {
   const updateTask = useLockedInStore((state) => state.updateTask);
-  const columns: Array<[TaskStatus, string]> = [["todo", "To do"], ["in-progress", "In progress"], ["done", "Done"]];
+  const columns: Array<[TaskStatus, string]> = [["todo", "To do"], ["done", "Done"]];
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       {columns.map(([status, label]) => (
         <div key={status} className="rounded-xl border border-white/8 bg-white/[0.025] p-3">
           <p className="mb-3 text-sm font-semibold">{label}</p>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 visible-scrollbar">
             {tasks.filter((task) => task.status === status || (status === "done" && task.completed)).map((task) => (
-              <button
-                key={task.id}
-                onClick={() => updateTask(task.id, { status: status === "done" ? "todo" : "in-progress", completed: false })}
-                className="w-full rounded-lg border border-white/8 bg-white/[0.04] p-3 text-left"
-              >
-                <p className="text-sm font-semibold">{task.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{formatDate(task.dueDate)} / {task.category}</p>
-              </button>
+              interactive ? (
+                <button
+                  key={task.id}
+                  onClick={() => {
+                    const newStatus: TaskStatus = status === "done" ? "todo" : "done";
+                    updateTask(task.id, { status: newStatus, completed: newStatus === "done" });
+                  }}
+                  className="w-full rounded-lg border border-white/8 bg-white/[0.04] p-3 text-left"
+                >
+                  <p className="text-sm font-semibold">{task.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{task.dueDate ? formatDate(task.dueDate) : "Someday"} / {task.category}</p>
+                </button>
+              ) : (
+                <div key={task.id} className="w-full rounded-lg border border-white/8 bg-white/[0.02] p-3 text-left opacity-80 cursor-default">
+                  <p className="text-sm font-semibold">{task.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{task.dueDate ? formatDate(task.dueDate) : "Someday"} / {task.category}</p>
+                </div>
+              )
             ))}
           </div>
         </div>
@@ -127,12 +136,27 @@ function KanbanView({ tasks }: { tasks: Task[] }) {
 
 
 
+
 export function DailyGoals() {
   const [activeCategory, setActiveCategory] = useState<"All" | "Personal" | "Routine">("All");
   const tasks = useFilteredTasks(activeCategory);
+  const allTasks = useLockedInStore((state) => state.tasks);
+  const search = useDebounce(useLockedInStore((state) => state.search));
+
+  // Kanban should show all matching tasks (by search/category), not be restricted by the date filter
+  const kanbanTasks = allTasks.filter((task) => {
+    const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (activeCategory !== "All") {
+      const taskCategory = (task.category || "Personal").toLowerCase();
+      if (taskCategory !== activeCategory.toLowerCase()) return false;
+    }
+    return true;
+  });
   
   const taskView = useLockedInStore((state) => state.taskView);
   const activeTaskView = taskView === "calendar" ? "list" : taskView;
+  const isKanban = activeTaskView === "kanban";
   const setTaskView = useLockedInStore((state) => state.setTaskView);
   const rawFilter = useLockedInStore((state) => state.taskFilter);
   const setTaskFilter = useLockedInStore((state) => state.setTaskFilter);
@@ -170,45 +194,51 @@ export function DailyGoals() {
             {/* Left: Tab selectors & Category Toggles */}
             <div className="flex flex-wrap items-center gap-4">
               <Tabs value={activeFilter} onValueChange={(value) => setTaskFilter(value as any)}>
-                <TabsList className="flex bg-white/5 border border-white/8 p-1">
+                <TabsList className={cn("flex bg-white/5 border border-white/8 p-1", isKanban ? "opacity-50 pointer-events-none" : "") }>
                   {filters.map(([id, label]) => (
-                    <TabsTrigger key={id} value={id}>
+                    <TabsTrigger key={id} value={id} disabled={isKanban}>
                       {label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
               
-              <div className="flex items-center gap-2 border-l border-white/8 pl-4">
+              <div className={cn("flex items-center gap-2 border-l border-white/8 pl-4", isKanban ? "opacity-50 pointer-events-none" : "")}>
                 <button
                   onClick={() => setActiveCategory("All")}
+                  disabled={isKanban}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
                     activeCategory === "All"
                       ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
-                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                    isKanban ? "opacity-50 pointer-events-none" : ""
                   )}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setActiveCategory("Personal")}
+                  disabled={isKanban}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
                     activeCategory === "Personal"
                       ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
-                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                    isKanban ? "opacity-50 pointer-events-none" : ""
                   )}
                 >
                   Personal
                 </button>
                 <button
                   onClick={() => setActiveCategory("Routine")}
+                  disabled={isKanban}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-xs font-semibold border transition-all duration-200",
                     activeCategory === "Routine"
                       ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(255,255,255,0.05)]"
-                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                      : "bg-white/[0.03] border-white/8 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                    isKanban ? "opacity-50 pointer-events-none" : ""
                   )}
                 >
                   Routine
@@ -220,7 +250,11 @@ export function DailyGoals() {
                   onClick={rollOverTodayTasks}
                   variant="ghost"
                   size="sm"
-                  className="rounded-full px-4 py-1.5 text-xs font-semibold border border-primary/25 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-[0_0_12px_rgba(var(--primary-rgb),0.02)]"
+                  disabled={activeTaskView === "kanban"}
+                  className={cn(
+                    "rounded-full px-4 py-1.5 text-xs font-semibold border border-primary/25 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-[0_0_12px_rgba(var(--primary-rgb),0.02)]",
+                    activeTaskView === "kanban" ? "opacity-50 pointer-events-none" : ""
+                  )}
                 >
                   Move undone to tomorrow
                 </Button>
@@ -228,7 +262,7 @@ export function DailyGoals() {
             </div>
 
             {/* Right: Inline Sleek Progress Bar & Plus Button */}
-            <div className="flex items-center gap-3">
+              <div className={cn("flex items-center gap-3", isKanban ? "opacity-50 pointer-events-none" : "")}>
               <div className="flex min-w-[220px] flex-col gap-1.5 lg:w-72">
                 <div className="flex justify-between text-xs font-medium">
                   <span className="text-muted-foreground capitalize">
@@ -247,7 +281,8 @@ export function DailyGoals() {
                 onClick={() => setModal("task")}
                 size="icon"
                 aria-label="Quick add task"
-                className="shrink-0"
+                disabled={isKanban}
+                className={cn("shrink-0", isKanban ? "opacity-50 pointer-events-none" : "")}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -255,7 +290,7 @@ export function DailyGoals() {
           </div>
 
           {activeTaskView === "list" && <ListView tasks={tasks} />}
-          {activeTaskView === "kanban" && <KanbanView tasks={tasks} />}
+          {activeTaskView === "kanban" && <KanbanView tasks={kanbanTasks} />}
         </CardContent>
       </Card>
     </section>

@@ -19,7 +19,7 @@ export type Task = {
   description: string;
   category: string;
   priority: Priority;
-  dueDate: string;
+  dueDate?: string;
   deadline?: string;
   schedule: TaskSchedule;
   recurrence: "none" | "daily" | "weekly" | "monthly";

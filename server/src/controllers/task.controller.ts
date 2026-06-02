@@ -35,15 +35,30 @@ export async function updateTask(request: Request, response: Response) {
     return response.json({ id: request.params.id, ...request.body });
   }
 
-  const patch = {
-    ...request.body,
-    completedAt: request.body.completed ? new Date() : undefined,
-    status: request.body.completed ? "done" : request.body.status
-  };
+  const patch: Record<string, unknown> = { ...request.body };
+
+  if (Object.prototype.hasOwnProperty.call(request.body, "completed")) {
+    if (request.body.completed) {
+      patch.completedAt = new Date();
+      patch.status = "done";
+    } else {
+      delete patch.completedAt;
+      if (!Object.prototype.hasOwnProperty.call(request.body, "status")) {
+        delete patch.status;
+      }
+    }
+  }
+
+  Object.entries(patch).forEach(([key, value]) => {
+    if (value === undefined) {
+      delete patch[key];
+    }
+  });
+
   const task = await TaskModel.findOneAndUpdate(
     { _id: request.params.id, userId: request.user.mongoId },
     patch,
-    { new: true }
+    { new: true, runValidators: true }
   );
   if (!task) return response.status(404).json({ message: "Task not found" });
   return response.json(task);

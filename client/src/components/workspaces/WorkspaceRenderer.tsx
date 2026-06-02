@@ -1,4 +1,4 @@
-import { GripVertical, Send, Sparkles } from "lucide-react";
+import { GripVertical, Send, Sparkles, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,14 +135,28 @@ export function WorkspaceRenderer({ workspace }: { workspace: WorkspaceConfig })
                 <Sparkles className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase">AI generated workspace</span>
               </div>
-              <h2 className="mt-3 text-3xl font-bold">{workspace.name}</h2>
+              <div className="mt-3 flex items-center gap-3">
+                <h2 className="text-3xl font-bold">{workspace.name}</h2>
+                <button
+                  className="rounded p-1 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    const newName = window.prompt("Rename workspace", workspace.name);
+                    if (newName && newName.trim().length > 0) {
+                      const updateWorkspace = useLockedInStore.getState().updateWorkspace;
+                      void updateWorkspace(workspace.id, { name: newName.trim() });
+                    }
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              </div>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{workspace.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {workspace.tags.map((tag) => <span key={tag} className="rounded-md bg-white/8 px-2 py-1 text-xs">{tag}</span>)}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {workspace.analytics.map((metric) => (
+              {workspace.analytics.filter((m) => !/upcoming\s*tests?/i.test(m.label)).map((metric) => (
                 <div key={metric.id} className="rounded-lg border border-white/8 bg-white/[0.04] p-3">
                   <p className="text-xs text-muted-foreground">{metric.label}</p>
                   <p className="mt-1 text-xl font-bold">{metric.value}</p>

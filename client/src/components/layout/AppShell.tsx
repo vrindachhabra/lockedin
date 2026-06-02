@@ -9,6 +9,8 @@ import {
   Plus,
   Search,
   Sun,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -22,6 +24,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const setSearch = useLockedInStore((state) => state.setSearch);
   const workspaces = useLockedInStore((state) => state.workspaces);
   const logout = useLockedInStore((state) => state.logout);
+
+  const [tabLabels, setTabLabels] = useState({
+    "daily-goals": "Daily Goals",
+    "placement-tracker": "Placement Tracker"
+  });
+  const [editingTabId, setEditingTabId] = useState<"daily-goals" | "placement-tracker" | null>(null);
+  const [editingTabValue, setEditingTabValue] = useState("");
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<string | null>(null);
+  const [editingWorkspaceValue, setEditingWorkspaceValue] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("lockedin-tab-labels");
+    if (stored) {
+      try {
+        setTabLabels(JSON.parse(stored));
+      } catch {
+        // ignore invalid storage
+      }
+    }
+  }, []);
+
+  const saveTabLabel = (id: "daily-goals" | "placement-tracker", value: string) => {
+    const next = { ...tabLabels, [id]: value.trim() };
+    setTabLabels(next);
+    localStorage.setItem("lockedin-tab-labels", JSON.stringify(next));
+  };
+
+  const finishTabEdit = () => {
+    if (editingTabId && editingTabValue.trim().length > 0) {
+      saveTabLabel(editingTabId, editingTabValue);
+    }
+    setEditingTabId(null);
+    setEditingTabValue("");
+  };
+
+  const cancelTabEdit = () => {
+    setEditingTabId(null);
+    setEditingTabValue("");
+  };
+
+  const finishWorkspaceEdit = () => {
+    if (editingWorkspaceId && editingWorkspaceValue.trim().length > 0) {
+      const updateWorkspace = useLockedInStore.getState().updateWorkspace;
+      void updateWorkspace(editingWorkspaceId, { name: editingWorkspaceValue.trim() });
+    }
+    setEditingWorkspaceId(null);
+    setEditingWorkspaceValue("");
+  };
+
+  const cancelWorkspaceEdit = () => {
+    setEditingWorkspaceId(null);
+    setEditingWorkspaceValue("");
+  };
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof document !== 'undefined') {
@@ -55,16 +110,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const tabs = [
     { id: "daily-goals" as const, label: "Daily Goals", icon: CalendarCheck2 },
-    { id: "placement-tracker" as const, label: "Placement Tracker", icon: BriefcaseBusiness },
-    { id: "workspace-generator" as const, label: "Create Workspace", icon: Plus }
+    { id: "placement-tracker" as const, label: "Placement Tracker", icon: BriefcaseBusiness }
   ];
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">
       <div className="surface-line pointer-events-none absolute inset-0 opacity-80" />
-      <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
+      {activeTab !== "workspace-generator" && (
+        <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
+      )}
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-white/8 bg-black/25 p-5 backdrop-blur-xl lg:block">
+        <aside className="relative flex h-screen min-h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-black/25 p-5 backdrop-blur-xl lg:block">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-base font-black text-primary-foreground">
               L
@@ -74,38 +130,133 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground">Your life. Organized.</p>
             </div>
           </div>
-          <nav className="mt-10 space-y-2">
+          <div className="mt-6">
+            <button
+              onClick={() => setModal("workspace")}
+              className="flex h-11 w-full items-center gap-3 rounded-full bg-slate-800/90 px-4 text-left text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              <Plus className="h-4 w-4" />
+              Create Workspace
+            </button>
+          </div>
+
+          <nav className="mt-4 flex flex-col flex-1 min-h-0 overflow-hidden">
             {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
-                  activeTab === tab.id && "bg-white/10 text-foreground"
+              <div key={tab.id} className="group relative">
+                <button
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex h-11 w-full items-center gap-3 rounded-lg px-3 pr-14 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
+                    activeTab === tab.id && "bg-white/10 text-foreground"
+                  )}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {editingTabId === tab.id ? (
+                    <input
+                      autoFocus
+                      value={editingTabValue}
+                      onChange={(event) => setEditingTabValue(event.target.value)}
+                      onBlur={finishTabEdit}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          finishTabEdit();
+                        }
+                        if (event.key === "Escape") {
+                          cancelTabEdit();
+                        }
+                      }}
+                      className="w-full bg-transparent text-left text-sm font-semibold text-foreground outline-none"
+                    />
+                  ) : (
+                    <span className="truncate">{tabLabels[tab.id]}</span>
+                  )}
+                </button>
+                {editingTabId !== tab.id && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditingTabId(tab.id);
+                      setEditingTabValue(tabLabels[tab.id]);
+                    }}
+                    aria-label={`Rename ${tabLabels[tab.id]}`}
+                    className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded p-2 text-muted-foreground transition hover:text-foreground group-hover:inline-flex"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
                 )}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </button>
+              </div>
             ))}
-            {workspaces.map((workspace) => (
-              <button
-                key={workspace.id}
-                onClick={() => setActiveTab(`workspace:${workspace.id}`)}
-                className={cn(
-                  "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
-                  activeTab === `workspace:${workspace.id}` && "bg-white/10 text-foreground"
-                )}
-              >
-                <FolderKanban className="h-4 w-4" />
-                <span className="truncate">{workspace.name}</span>
-              </button>
-            ))}
+
+            <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 pb-28">
+              {workspaces.map((workspace) => (
+                <div key={workspace.id} className="group relative">
+                  <button
+                    onClick={() => setActiveTab(`workspace:${workspace.id}`)}
+                    className={cn(
+                      "flex h-11 w-full items-center gap-3 rounded-lg px-3 pr-14 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
+                      activeTab === `workspace:${workspace.id}` && "bg-white/10 text-foreground"
+                    )}
+                  >
+                    <FolderKanban className="h-4 w-4" />
+                    {editingWorkspaceId === workspace.id ? (
+                      <input
+                        autoFocus
+                        value={editingWorkspaceValue}
+                        onChange={(event) => setEditingWorkspaceValue(event.target.value)}
+                        onBlur={finishWorkspaceEdit}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            finishWorkspaceEdit();
+                          }
+                          if (event.key === "Escape") {
+                            cancelWorkspaceEdit();
+                          }
+                        }}
+                        className="w-full bg-transparent text-left text-sm font-semibold text-foreground outline-none"
+                      />
+                    ) : (
+                      <span className="truncate">{workspace.name}</span>
+                    )}
+                  </button>
+                  <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                    {editingWorkspaceId !== workspace.id && (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setEditingWorkspaceId(workspace.id);
+                          setEditingWorkspaceValue(workspace.name);
+                        }}
+                        aria-label="Rename workspace"
+                        className="pointer-events-auto rounded p-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (window.confirm(`Delete workspace '${workspace.name}'? This cannot be undone.`)) {
+                          const deleteWorkspace = useLockedInStore.getState().deleteWorkspace;
+                          void deleteWorkspace(workspace.id);
+                        }
+                      }}
+                      aria-label="Delete workspace"
+                      className="pointer-events-auto rounded p-2 text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </nav>
-          <Button variant="ghost" className="mt-6 w-full justify-start" onClick={logout}>
-            <LogOut className="h-4 w-4" />
-            Log out
-          </Button>
+
+          <div className="absolute left-5 bottom-5 w-[calc(100%-4rem)]">
+            <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+              <LogOut className="h-4 w-4" />
+              Log out
+            </Button>
+          </div>
         </aside>
 
         <section className="min-w-0 flex-1">
@@ -128,16 +279,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="hidden h-10 min-w-80 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.055] px-3 text-sm text-muted-foreground md:flex">
-                  <Search className="h-4 w-4" />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    className="w-full bg-transparent outline-none"
-                    placeholder={activeTab === "placement-tracker" ? "Search companies, roles, platforms" : "Search tasks"}
-                  />
-                </div>
-                {activeTab !== "daily-goals" && activeTab !== "placement-tracker" && (
+                {activeTab !== "workspace-generator" && (
+                  <div className="hidden h-10 min-w-80 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.055] px-3 text-sm text-muted-foreground md:flex">
+                    <Search className="h-4 w-4" />
+                    <input
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      className="w-full bg-transparent outline-none"
+                      placeholder={activeTab === "placement-tracker" ? "Search companies, roles, platforms" : "Search tasks"}
+                    />
+                  </div>
+                )}
+                {activeTab !== "daily-goals" && activeTab !== "placement-tracker" && activeTab !== "workspace-generator" && (
                   <Button
                     onClick={() => setModal("workspace")}
                     size="icon"
@@ -174,9 +327,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {workspace.name}
                 </Button>
               ))}
+              <Button
+                variant={activeTab === "workspace-generator" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setActiveTab("workspace-generator")}
+              >
+                <Plus className="h-4 w-4" />
+                Create Workspace
+              </Button>
             </div>
           </header>
-          <div className="container py-6 md:py-8">
+          <div className={cn(activeTab === "workspace-generator" ? "w-full" : "container py-6 md:py-8")}>
             {children}
           </div>
         </section>

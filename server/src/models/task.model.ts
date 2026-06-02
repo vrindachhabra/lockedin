@@ -7,7 +7,7 @@ const taskSchema = new Schema(
     description: { type: String, default: "" },
     category: { type: String, default: "Personal", index: true },
     priority: { type: String, enum: ["low", "medium", "high"], default: "medium" },
-    dueDate: { type: Date, required: true, index: true },
+    dueDate: { type: Date, required: false, index: true },
     deadline: { type: Date, index: true },
     schedule: { type: String, enum: ["today", "tomorrow", "future", "weekend", "recurring"], default: "today" },
     recurrence: { type: String, enum: ["none", "daily", "weekly", "monthly"], default: "none" },

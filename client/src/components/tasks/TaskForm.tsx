@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
+import * as React from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ const schema = z.object({
   deadline: z.string().optional(),
   schedule: z.enum(["today", "tomorrow", "future", "weekend", "recurring"]),
   recurrence: z.enum(["none", "daily", "weekly", "monthly"])
+  ,
+  doItSomeday: z.boolean().optional().default(false)
 });
 
 type Values = z.infer<typeof schema>;
@@ -26,12 +29,14 @@ type Values = z.infer<typeof schema>;
 const defaults: Values = {
   title: "",
   description: "",
-  category: "Select category",
+  category: "Personal",
   priority: "medium",
   dueDate: toInputDate(new Date()),
   deadline: "",
   schedule: "today",
   recurrence: "none"
+  ,
+  doItSomeday: false
 };
 
 export function TaskForm({ task }: { task?: Task }) {
@@ -45,7 +50,7 @@ export function TaskForm({ task }: { task?: Task }) {
   // Force correct defaults on each modal mount, overriding any outdated localStorage drafts
   const normalizedDraft: Values = {
     ...draft,
-    category: "Select category",
+    category: categories[0] ?? "Personal",
     recurrence: "none",
     dueDate: toInputDate(new Date())
   };
@@ -69,6 +74,21 @@ export function TaskForm({ task }: { task?: Task }) {
 
   useEffect(() => setDraft({ ...defaults, ...watched }), [setDraft, watched]);
 
+  const titleRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Auto-focus & select title when creating a new task
+  useEffect(() => {
+    if (!task) {
+      const id = setTimeout(() => {
+        if (titleRef.current) {
+          titleRef.current.focus();
+          titleRef.current.select();
+        }
+      }, 50);
+      return () => clearTimeout(id);
+    }
+  }, [task]);
+
   const onSubmit = async (values: Values) => {
     if (values.category === "Routine" && values.recurrence === "none") {
       pushToast({
@@ -81,7 +101,7 @@ export function TaskForm({ task }: { task?: Task }) {
 
     const taskData = {
       ...values,
-      dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : new Date().toISOString(),
+      dueDate: values.doItSomeday ? undefined : (values.dueDate ? new Date(values.dueDate).toISOString() : new Date().toISOString()),
       deadline: values.deadline ? new Date(values.deadline).toISOString() : undefined,
     };
 
@@ -98,14 +118,29 @@ export function TaskForm({ task }: { task?: Task }) {
     setModal(null);
   };
 
+  const titleRegister = form.register("title");
+  const doItSomedayRegister = form.register("doItSomeday");
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-      <Input placeholder="Task title" {...form.register("title")} />
+      <Input
+        placeholder="Task title"
+        {...titleRegister}
+        ref={(el) => {
+          titleRegister.ref(el);
+          titleRef.current = el;
+        }}
+      />
+      <div className="flex items-center gap-2">
+        <input type="checkbox" id="doItSomeday" {...doItSomedayRegister} className="h-4 w-4" />
+        <label htmlFor="doItSomeday" className="text-sm text-muted-foreground">Do it someday</label>
+      </div>
       <Input placeholder="Description" {...form.register("description")} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Select {...form.register("category")}>
-          <option value="Select category">Select category</option>
-          {categories.map((category) => <option key={category}>{category}</option>)}
+          {categories.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
         </Select>
         <Select {...form.register("recurrence")}>
           <option value="none">No recurrence</option>

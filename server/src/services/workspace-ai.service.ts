@@ -5,6 +5,13 @@ import { workspaceConfigSchema, type WorkspaceConfigInput } from "../schemas/wor
 
 const client = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 
+if (!env.OPENAI_API_KEY) {
+  // Helpful log to surface why AI features are falling back.
+  // Keep this lightweight so it appears during server startup.
+  // eslint-disable-next-line no-console
+  console.warn("OPENAI_API_KEY not configured — workspace AI will use fallback generator.");
+}
+
 function slug(value: string) {
   return value
     .toLowerCase()
@@ -112,22 +119,29 @@ export function fallbackWorkspace(prompt: string): WorkspaceConfigInput {
 export async function generateWorkspaceFromPrompt(prompt: string) {
   if (!client) return fallbackWorkspace(prompt);
 
-  const response = await client.responses.parse({
-    model: env.OPENAI_MODEL,
-    input: [
-      {
-        role: "system",
-        content:
-          "You design premium schema-based productivity workspaces for LockedIn. Return a practical, editable dashboard schema with useful analytics, sections, fields, widgets, sample entries, tags, and database schema metadata. Keep ids lowercase kebab-case."
-      },
-      { role: "user", content: prompt }
-    ],
-    text: {
-      format: zodTextFormat(workspaceConfigSchema, "lockedin_workspace")
-    }
-  });
+  try {
+    const response = await client.responses.parse({
+      model: env.OPENAI_MODEL,
+      input: [
+        {
+          role: "system",
+          content:
+            "You design premium schema-based productivity workspaces for LockedIn. Return a practical, editable dashboard schema with useful analytics, sections, fields, widgets, sample entries, tags, and database schema metadata. Keep ids lowercase kebab-case."
+        },
+        { role: "user", content: prompt }
+      ],
+      text: {
+        format: zodTextFormat(workspaceConfigSchema, "lockedin_workspace")
+      }
+    });
 
-  return response.output_parsed ?? fallbackWorkspace(prompt);
+    return response.output_parsed ?? fallbackWorkspace(prompt);
+  } catch (err) {
+    // Log error and fall back gracefully so UI remains usable.
+    // eslint-disable-next-line no-console
+    console.error("Workspace AI generation failed:", err);
+    return fallbackWorkspace(prompt);
+  }
 }
 
 export async function refineWorkspaceWithPrompt(current: WorkspaceConfigInput, instruction: string) {
@@ -154,21 +168,26 @@ export async function refineWorkspaceWithPrompt(current: WorkspaceConfigInput, i
       ]
     };
   }
+  try {
+    const response = await client.responses.parse({
+      model: env.OPENAI_MODEL,
+      input: [
+        {
+          role: "system",
+          content:
+            "Modify the existing LockedIn workspace schema according to the user instruction. Preserve useful existing sections while adding or improving the requested capability. Return the full updated schema."
+        },
+        { role: "user", content: JSON.stringify({ current, instruction }) }
+      ],
+      text: {
+        format: zodTextFormat(workspaceConfigSchema, "lockedin_workspace_refinement")
+      }
+    });
 
-  const response = await client.responses.parse({
-    model: env.OPENAI_MODEL,
-    input: [
-      {
-        role: "system",
-        content:
-          "Modify the existing LockedIn workspace schema according to the user instruction. Preserve useful existing sections while adding or improving the requested capability. Return the full updated schema."
-      },
-      { role: "user", content: JSON.stringify({ current, instruction }) }
-    ],
-    text: {
-      format: zodTextFormat(workspaceConfigSchema, "lockedin_workspace_refinement")
-    }
-  });
-
-  return response.output_parsed ?? current;
+    return response.output_parsed ?? current;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Workspace AI refinement failed:", err);
+    return current;
+  }
 }

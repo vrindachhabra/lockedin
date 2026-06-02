@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import * as React from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { toInputDate } from "@/lib/date";
 import type { Placement, PlacementStatus } from "@/types";
@@ -54,12 +53,6 @@ export function PlacementForm({
     (state) => state.setModal
   );
 
-  const { draft, setDraft, clearDraft } =
-    useAutosaveDraft<Values>(
-      "lockedin.placement-draft",
-      defaults
-    );
-
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: placement
@@ -92,19 +85,23 @@ export function PlacementForm({
       externalRemarks:
         placement.externalRemarks || ""
     }
-  : draft
+  : defaults
   });
 
-  const watched = useWatch({
-    control: form.control
-  });
+  const companyRef = React.useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    setDraft({
-      ...defaults,
-      ...watched
-    });
-  }, [setDraft, watched]);
+  // Auto-focus & select company when adding a new placement
+  React.useEffect(() => {
+    if (!placement) {
+      const id = setTimeout(() => {
+        if (companyRef.current) {
+          companyRef.current.focus();
+          companyRef.current.select();
+        }
+      }, 50);
+      return () => clearTimeout(id);
+    }
+  }, [placement]);
 
   const onSubmit = async (values: Values) => {
     const placementData = {
@@ -154,7 +151,6 @@ export function PlacementForm({
       await addPlacement(placementData);
     }
 
-    clearDraft();
     form.reset(defaults);
     setModal(null);
   };
@@ -164,10 +160,19 @@ export function PlacementForm({
       className="space-y-4"
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input
-          placeholder="Company *"
-          {...form.register("companyName")}
-        />
+        {(() => {
+          const companyRegister = form.register("companyName");
+          return (
+            <Input
+              placeholder="Company *"
+              {...companyRegister}
+              ref={(el) => {
+                companyRegister.ref(el as any);
+                companyRef.current = el;
+              }}
+            />
+          );
+        })()}
 
         <Input
           type="date"

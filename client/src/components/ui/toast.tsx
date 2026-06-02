@@ -1,4 +1,4 @@
-import { CheckCircle2, Info, X, XCircle } from "lucide-react";
+import { CheckCircle2, CornerUpLeft, Info, X, XCircle } from "lucide-react";
 import {useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
@@ -20,7 +20,7 @@ export function ToastViewport() {
 
     const timer = setTimeout(() => {
       dismiss(latestToast.id);
-    }, 3000);
+    }, latestToast.duration ?? 3000);
 
     return () => clearTimeout(timer);
   }, [toasts, dismiss]);
@@ -31,12 +31,25 @@ export function ToastViewport() {
         const Icon = icons[toast.tone ?? "info"];
         return (
           <div key={toast.id} className="glass rounded-xl p-4">
-            <div className="flex gap-3">
-              <Icon className="mt-0.5 h-4 w-4 text-primary" />
+            <div className="flex items-center gap-3">
+              <Icon className="h-4 w-4 text-primary" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{toast.title}</p>
                 {toast.description && <p className="mt-1 text-xs text-muted-foreground">{toast.description}</p>}
               </div>
+              {toast.actionLabel && toast.action && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-primary transition hover:text-foreground"
+                  onClick={() => {
+                    toast.action?.();
+                    dismiss(toast.id);
+                  }}
+                >
+                  <CornerUpLeft className="h-3.5 w-3.5" />
+                  {toast.actionLabel}
+                </button>
+              )}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => dismiss(toast.id)}>
                 <X className="h-3.5 w-3.5" />
               </Button>

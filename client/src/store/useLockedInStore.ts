@@ -20,6 +20,9 @@ type Toast = {
   title: string;
   description?: string;
   tone?: "success" | "error" | "info";
+  duration?: number;
+  actionLabel?: string;
+  action?: () => void;
 };
 
 type ModalType =
@@ -61,7 +64,7 @@ type LockedInState = {
   logout: () => void;
   loadDashboard: () => Promise<void>;
   addTask: (task: Omit<Task, "id">) => Promise<void>;
-  updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
+  updateTask: (id: string, patch: Partial<Task>, opts?: { silent?: boolean }) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   addPlacement: (placement: Omit<Placement, "id">) => Promise<void>;
   updatePlacement: (id: string, patch: Partial<Placement>) => Promise<void>;
@@ -69,6 +72,8 @@ type LockedInState = {
   generateWorkspace: (prompt: string) => Promise<void>;
   refineWorkspace: (id: string, instruction: string) => Promise<void>;
   updateWorkspaceSections: (id: string, sections: WorkspaceSection[]) => Promise<void>;
+  updateWorkspace: (id: string, patch: Partial<WorkspaceConfig>) => Promise<void>;
+  deleteWorkspace: (id: string) => Promise<void>;
   setActiveTab: (tab: ActiveTab) => void;
   setTaskView: (view: TaskView) => void;
   setTaskFilter: (filter: TaskFilter) => void;
@@ -125,6 +130,7 @@ export const useLockedInStore = create<LockedInState>()(
         authToken.set(result.token);
         set({ token: result.token, user: result.user });
         await get().loadDashboard();
+        set({ activeTab: "daily-goals" });
         get().pushToast({ title: "Welcome back", description: "Your workspace is synced.", tone: "success" });
       },
       signup: async (payload) => {
@@ -132,6 +138,7 @@ export const useLockedInStore = create<LockedInState>()(
         authToken.set(result.token);
         set({ token: result.token, user: result.user });
         await get().loadDashboard();
+        set({ activeTab: "daily-goals" });
         get().pushToast({ title: "Account created", description: "Your LockedIn OS is ready.", tone: "success" });
       },
       logout: () => {
@@ -151,7 +158,7 @@ export const useLockedInStore = create<LockedInState>()(
       addTask: async (task) => {
         const optimistic = { ...task, id: crypto.randomUUID() };
         set((state) => ({ tasks: [optimistic, ...state.tasks] }));
-        get().pushToast({ title: "Task added", description: optimistic.title, tone: "success" });
+        get().pushToast({ title: "Task added", description: optimistic.title, tone: "success", duration: 3000 });
         try {
           const saved = await api.tasks.create(task);
           set((state) => ({
@@ -161,7 +168,7 @@ export const useLockedInStore = create<LockedInState>()(
           get().pushToast({ title: "Saved locally", description: "The API will sync when available.", tone: "info" });
         }
       },
-      updateTask: async (id, patch) => {
+      updateTask: async (id, patch, opts) => {
         const previous = get().tasks;
         set((state) => ({
           tasks: state.tasks.map((task) =>
@@ -170,6 +177,9 @@ export const useLockedInStore = create<LockedInState>()(
         }));
         try {
           await api.tasks.update(id, patch);
+          if (!opts?.silent) {
+            get().pushToast({ title: "Task updated", description: "Your task changes were saved.", tone: "success" });
+          }
         } catch {
           set({ tasks: previous });
           get().pushToast({ title: "Task update failed", description: "Your previous state was restored.", tone: "error" });
@@ -186,7 +196,10 @@ export const useLockedInStore = create<LockedInState>()(
           get().pushToast({
             title: "Task deleted",
             description: deleted?.title || "Task removed",
-            tone: "success"
+            tone: "success",
+            duration: 4000,
+            actionLabel: "Undo",
+            action: () => set({ tasks: previous })
           });
         } catch {
           set({ tasks: previous });
@@ -241,7 +254,9 @@ export const useLockedInStore = create<LockedInState>()(
             description:
               deleted?.companyName ||
               "Company removed",
-            tone: "success"
+            tone: "success",
+            actionLabel: "Undo",
+            action: () => set({ placements: previous })
           });
         } catch {
           set({ placements: previous });
@@ -260,7 +275,7 @@ export const useLockedInStore = create<LockedInState>()(
           const workspace = await api.workspaces.create(prompt);
           const normalized = { ...workspace, id: idOf(workspace) };
           set((state) => ({
-            workspaces: [normalized, ...state.workspaces],
+            workspaces: [...state.workspaces, normalized],
             activeWorkspaceId: normalized.id,
             activeTab: `workspace:${normalized.id}`,
             modal: null,
@@ -307,6 +322,33 @@ export const useLockedInStore = create<LockedInState>()(
         } catch {
           set({ workspaces: previous });
           get().pushToast({ title: "Workspace update failed", description: "Layout was restored.", tone: "error" });
+        }
+      },
+      updateWorkspace: async (id, patch) => {
+        const previous = get().workspaces;
+        set((state) => ({ workspaces: state.workspaces.map((w) => (w.id === id ? { ...w, ...patch } : w)) }));
+        try {
+          await api.workspaces.update(id, patch);
+          get().pushToast({ title: "Workspace updated", description: "Saved.", tone: "success" });
+        } catch {
+          set({ workspaces: previous });
+          get().pushToast({ title: "Workspace update failed", description: "Restored previous state.", tone: "error" });
+        }
+      },
+      deleteWorkspace: async (id) => {
+        const previous = get().workspaces;
+        const deleted = previous.find((w) => w.id === id);
+        set((state) => ({ workspaces: state.workspaces.filter((w) => w.id !== id) }));
+        try {
+          await api.workspaces.remove(id);
+          get().pushToast({ title: "Workspace deleted", description: deleted?.name ?? "Workspace removed", tone: "success" });
+          // if the active tab was this workspace, fallback to daily-goals
+          if (get().activeTab === `workspace:${id}`) {
+            set({ activeTab: "daily-goals", activeWorkspaceId: null });
+          }
+        } catch {
+          set({ workspaces: previous });
+          get().pushToast({ title: "Delete failed", description: "Could not delete workspace.", tone: "error" });
         }
       },
       setActiveTab: (activeTab) =>

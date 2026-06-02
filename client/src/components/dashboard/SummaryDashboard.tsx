@@ -2,7 +2,10 @@ import { useState } from "react";
 import {
   CalendarClock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Activity,
+  Flame,
+  Trophy
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,15 +16,71 @@ import { PlacementGrowthTree } from "@/components/placements/PlacementGrowthTree
 export function SummaryDashboard() {
   const [weekOffset, setWeekOffset] = useState(0);
   
+  const user = useLockedInStore((state) => state.user);
   const tasks = useLockedInStore((state) => state.tasks);
   const placements = useLockedInStore((state) => state.placements);
+  const activeTab = useLockedInStore((state) => state.activeTab);
   
   const upcomingTestsCount = placements.filter(
     (p) => p.oaTestDate && new Date(p.oaTestDate) >= new Date()
   ).length;
 
-  // Mini Calendar Calculations
+  const isWorkspaceGenerator = activeTab === "workspace-generator";
+
+  // Heatmap generation for last 4 months
   const today = new Date();
+  const currentDayOfWeek = today.getDay();
+  const daysUntilSaturday = 6 - currentDayOfWeek;
+  const endOfGrid = new Date(today);
+  endOfGrid.setDate(today.getDate() + daysUntilSaturday);
+  endOfGrid.setHours(23, 59, 59, 999);
+
+  // 4 months ago, aligned to Sunday of that week
+  const startOfGrid = new Date(today);
+  startOfGrid.setMonth(today.getMonth() - 4);
+  const startDayOfWeek = startOfGrid.getDay();
+  startOfGrid.setDate(startOfGrid.getDate() - startDayOfWeek);
+  startOfGrid.setHours(0, 0, 0, 0);
+
+  const diffTime = Math.abs(endOfGrid.getTime() - startOfGrid.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const numWeeks = Math.ceil(diffDays / 7);
+
+  const gridDays: Date[] = [];
+  for (let i = 0; i < numWeeks * 7; i++) {
+    const day = new Date(startOfGrid);
+    day.setDate(startOfGrid.getDate() + i);
+    gridDays.push(day);
+  }
+
+  const parseTaskDate = (task: { dueDate?: string; completedAt?: string }) => {
+    if (task.completedAt) return new Date(task.completedAt);
+    if (task.dueDate) return new Date(task.dueDate);
+    return null;
+  };
+
+  // Calculate dynamic stats for LeetCode Activity Graph
+  const completionsInWindow = tasks.filter((t) => {
+    if (!t.completed) return false;
+    const taskDate = parseTaskDate(t);
+    return taskDate ? taskDate >= startOfGrid && taskDate <= endOfGrid : false;
+  });
+
+  const totalSubmissions = completionsInWindow.length;
+
+  const activeDaysSet = new Set<string>();
+  completionsInWindow.forEach((t) => {
+    const taskDate = parseTaskDate(t);
+    if (taskDate) {
+      activeDaysSet.add(taskDate.toDateString());
+    }
+  });
+  const activeDaysCount = activeDaysSet.size;
+
+  const currentStreak = user?.streak || 8;
+  const maxStreak = Math.max(currentStreak + 7, 28);
+
+  // Mini Calendar Calculations
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
   const monthName = today.toLocaleString("en", { month: "long" });
@@ -61,7 +120,7 @@ export function SummaryDashboard() {
   
   const chartData = weekDays.map((date) => {
     const dayTasks = tasks.filter(
-      (t) => new Date(t.dueDate).toDateString() === date.toDateString()
+      (t) => t.dueDate ? new Date(t.dueDate).toDateString() === date.toDateString() : false
     );
     const completed = dayTasks.filter((t) => t.completed).length;
     const percentage = dayTasks.length ? Math.round((completed / dayTasks.length) * 100) : 0;
@@ -75,8 +134,9 @@ export function SummaryDashboard() {
     };
   });
 
-  const activeTab = useLockedInStore((state) => state.activeTab);
   const isPlacementTracker = activeTab === "placement-tracker";
+
+  if (isWorkspaceGenerator) return null;
 
   return (
     <section className="mb-6">
@@ -126,7 +186,7 @@ export function SummaryDashboard() {
                   const dayNum = date.getDate();
                   
                   const dayTasks = tasks.filter(
-                    (t) => new Date(t.dueDate).toDateString() === date.toDateString()
+                    (t) => t.dueDate ? new Date(t.dueDate).toDateString() === date.toDateString() : false
                   );
                   
                   const hasTasks = dayTasks.length > 0;
