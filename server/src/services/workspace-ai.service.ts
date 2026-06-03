@@ -27,26 +27,261 @@ function inferDomain(prompt: string) {
   if (text.includes("finance") || text.includes("budget") || text.includes("expense")) return "Finance OS";
   if (text.includes("startup") || text.includes("founder") || text.includes("product")) return "Startup Board";
   if (text.includes("content") || text.includes("youtube") || text.includes("instagram")) return "Content Planner";
-  if (text.includes("exam") || text.includes("study")) return "Exam Prep";
+  if (text.includes("exam") || text.includes("study") || text.includes("student") || text.includes("assignment") || text.includes("revision")) return "Study Planner";
   return "Custom Workspace";
+}
+
+function deriveTags(prompt: string) {
+  return Array.from(
+    new Set(
+      prompt
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((token) => token.length > 3)
+        .slice(0, 6)
+    )
+  ).map((tag) => tag.replace(/[^a-z0-9]/g, ""));
+}
+
+function buildFallbackSections(prompt: string, domain: string) {
+  const text = prompt.toLowerCase();
+  const isStudy = /study|exam|student|assignment|revision|semester|class|course/.test(text);
+  const isFitness = /gym|workout|training|nutrition|hydration|body measurement|consistency/.test(text);
+  const isStartup = /startup|product|investor|experiment|feedback|metrics/.test(text);
+
+  if (isStudy) {
+    return [
+      {
+        id: "overview",
+        title: "Study Overview",
+        description: "Track course progress, deadlines, and exam readiness.",
+        layout: "grid" as const,
+        widgets: [
+          { id: "metric-1", type: "metric", title: "Study progress", description: "Current learning completion", metricLabel: "%", value: 72 },
+          { id: "progress-1", type: "progress", title: "Weekly hours", description: "Time spent on study this week", progress: 58 },
+          { id: "streak-1", type: "metric", title: "Consistency", description: "Days studied in a row", metricLabel: "Days", value: 5 }
+        ]
+      },
+      {
+        id: "schedule",
+        title: "Assignment Calendar",
+        description: "Keep due dates, exams, and revision blocks visible.",
+        layout: "table" as const,
+        widgets: [
+          {
+            id: "table-1",
+            type: "table",
+            title: "Study schedule",
+            description: "Tasks, topics, and deadlines.",
+            fields: [
+              { id: "task", label: "Task", type: "text", required: true },
+              { id: "subject", label: "Subject", type: "select", required: true, options: ["Math", "CS", "Physics", "Electives"] },
+              { id: "deadline", label: "Deadline", type: "date", required: false },
+              { id: "status", label: "Status", type: "text", required: false }
+            ],
+            items: [
+              { task: "Finish assignment", subject: "CS", deadline: "This week", status: "In progress" },
+              { task: "Review notes", subject: "Math", deadline: "Tomorrow", status: "Planned" },
+              { task: "Exam revision", subject: "Physics", deadline: "Friday", status: "Pending" }
+            ]
+          }
+        ]
+      },
+      {
+        id: "revision",
+        title: "Revision Tracker",
+        description: "Capture key topics, progress, and next review dates.",
+        layout: "board" as const,
+        widgets: [
+          {
+            id: "checklist-1",
+            type: "checklist",
+            title: "Revision checklist",
+            description: "Stay on top of topics and follow-ups.",
+            items: [
+              { title: "Practice past papers", done: false },
+              { title: "Summarize chapter notes", done: true },
+              { title: "Test weak areas", done: false }
+            ]
+          },
+          { id: "notes-1", type: "notes", title: "Study notes", description: "Capture thoughts, insights, and exam strategy.", value: "Focus on problem-solving and time management." }
+        ]
+      }
+    ];
+  }
+
+  if (isFitness) {
+    return [
+      {
+        id: "overview",
+        title: "Fitness Summary",
+        description: "Track workouts, progress, and recovery.",
+        layout: "grid" as const,
+        widgets: [
+          { id: "metric-1", type: "metric", title: "Workout streak", description: "Days trained consecutively", metricLabel: "Days", value: 6 },
+          { id: "progress-1", type: "progress", title: "Goal completion", description: "Weekly target progress", progress: 64 },
+          { id: "streak-1", type: "metric", title: "Body metric trend", description: "Weight or measurement progress", metricLabel: "Trend", value: "Up" }
+        ]
+      },
+      {
+        id: "workouts",
+        title: "Workout Plan",
+        description: "Schedule sets, reps, and targeted muscle groups.",
+        layout: "table" as const,
+        widgets: [
+          {
+            id: "table-1",
+            type: "table",
+            title: "Training log",
+            description: "Plan and review workout sessions.",
+            fields: [
+              { id: "exercise", label: "Exercise", type: "text", required: true },
+              { id: "reps", label: "Reps", type: "text", required: false },
+              { id: "sets", label: "Sets", type: "text", required: false },
+              { id: "notes", label: "Notes", type: "text", required: false }
+            ],
+            items: [
+              { exercise: "Squats", reps: "5x5", sets: "5", notes: "Increase load" },
+              { exercise: "Bench press", reps: "4x8", sets: "4", notes: "Focus on form" },
+              { exercise: "Cardio", reps: "30 min", sets: "1", notes: "Steady pace" }
+            ]
+          }
+        ]
+      },
+      {
+        id: "nutrition",
+        title: "Nutrition & Recovery",
+        description: "Log meals, hydration, and body measurements.",
+        layout: "board" as const,
+        widgets: [
+          {
+            id: "checklist-1",
+            type: "checklist",
+            title: "Daily habits",
+            description: "Keep healthy routines visible.",
+            items: [
+              { title: "Drink 3L water", done: false },
+              { title: "Eat protein-rich meals", done: true },
+              { title: "Stretch after training", done: false }
+            ]
+          },
+          { id: "notes-1", type: "notes", title: "Recovery notes", description: "Track soreness, sleep, and energy.", value: "Rest well and adjust intensity as needed." }
+        ]
+      }
+    ];
+  }
+
+  if (isStartup) {
+    return [
+      {
+        id: "overview",
+        title: "Product Dashboard",
+        description: "Track progress across roadmap, metrics, and experiments.",
+        layout: "grid" as const,
+        widgets: [
+          { id: "metric-1", type: "metric", title: "Experiment wins", description: "Successful product experiments", metricLabel: "Count", value: 5 },
+          { id: "progress-1", type: "progress", title: "Roadmap completion", description: "Release milestones done", progress: 48 },
+          { id: "streak-1", type: "metric", title: "User feedback", description: "Positive feedback items", metricLabel: "Count", value: 12 }
+        ]
+      },
+      {
+        id: "execution",
+        title: "Execution Tracker",
+        description: "Manage tasks, experiments, and follow-ups.",
+        layout: "table" as const,
+        widgets: [
+          {
+            id: "table-1",
+            type: "table",
+            title: "Startup tasks",
+            description: "Track initiatives and next steps.",
+            fields: [
+              { id: "initiative", label: "Initiative", type: "text", required: true },
+              { id: "owner", label: "Owner", type: "text", required: false },
+              { id: "status", label: "Status", type: "select", required: false, options: ["Planned", "In progress", "Done"] },
+              { id: "notes", label: "Notes", type: "text", required: false }
+            ],
+            items: [
+              { initiative: "Run A/B test", owner: "Product", status: "In progress", notes: "Monitor conversion" },
+              { initiative: "Pitch investors", owner: "Founder", status: "Planned", notes: "Follow up next week" },
+              { initiative: "Collect feedback", owner: "Team", status: "Done", notes: "Summarized insights" }
+            ]
+          }
+        ]
+      },
+      {
+        id: "notes",
+        title: "Insights",
+        description: "Capture ideas, blockers, and product learnings.",
+        layout: "board" as const,
+        widgets: [
+          { id: "notes-1", type: "notes", title: "Product notes", description: "Write down important takeaways.", value: "Focus on user pain points and growth opportunities." }
+        ]
+      }
+    ];
+  }
+
+  return [
+    {
+      id: "overview",
+      title: "Overview",
+      description: "High-level progress, streaks, and open loops.",
+      layout: "grid" as const,
+      widgets: [
+        { id: "metric-1", type: "metric", title: "Weekly output", description: "Completed units this week", metricLabel: "Done", value: 18 },
+        { id: "progress-1", type: "progress", title: "Overall progress", description: "Across all tracked areas", progress: 64 },
+        { id: "streak-1", type: "metric", title: "Streak", description: "Consecutive active days", metricLabel: "Days", value: 7 }
+      ]
+    },
+    {
+      id: "trackers",
+      title: "Trackers",
+      description: "Editable tracking table for the workflow.",
+      layout: "table" as const,
+      widgets: [
+        {
+          id: "table-1",
+          type: "table",
+          title: "Progress table",
+          description: "Track tasks, subjects, milestones, and deadlines.",
+          fields: [
+            { id: "item", label: "Item", type: "text", required: true },
+            { id: "area", label: "Area", type: "select", required: true, options: ["Core", "Revision", "Practice", "Admin"] },
+            { id: "progress", label: "Progress", type: "progress", required: true },
+            { id: "deadline", label: "Deadline", type: "date", required: false }
+          ],
+          items: [
+            { item: "Daily practice", area: "Practice", progress: 70, deadline: "This week" },
+            { item: "Core concepts", area: "Theory", progress: 48, deadline: "Next week" },
+            { item: "Revision loop", area: "Revision", progress: 30, deadline: "Friday" }
+          ]
+        }
+      ]
+    }
+  ];
 }
 
 export function fallbackWorkspace(prompt: string): WorkspaceConfigInput {
   const domain = inferDomain(prompt);
-  const base = slug(domain);
+  const title = prompt
+    .replace(/[^a-zA-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 42) || domain;
+  const tags = deriveTags(prompt);
 
   return {
-    name: domain,
-    description: `A custom LockedIn workspace generated from: ${prompt}`,
+    name: title,
+    description: `A workspace created from the prompt: ${prompt}`,
     icon: "sparkles",
-    tags: ["AI generated", "Dashboard", "Tracking"],
+    tags: tags.length ? tags : [domain, "AI generated", "Workspace"],
     analytics: [
-      { id: "completion", label: "Completion", value: "64%", trend: "Up 12% this week" },
+      { id: "progress", label: `${domain} progress`, value: "64%", trend: "Up 12% this week" },
       { id: "streak", label: "Consistency streak", value: 7, trend: "Best streak this month" },
       { id: "open-items", label: "Open items", value: 9, trend: "3 high priority" }
     ],
     schema: {
-      collectionName: `${base || "workspace"}_entries`,
+      collectionName: `${slug(title)}_entries`,
       fields: [
         { id: "title", label: "Title", type: "text", required: true },
         { id: "category", label: "Category", type: "select", required: true, options: ["Core", "Revision", "Practice", "Admin"] },
@@ -55,64 +290,7 @@ export function fallbackWorkspace(prompt: string): WorkspaceConfigInput {
         { id: "tags", label: "Tags", type: "tags", required: false }
       ]
     },
-    sections: [
-      {
-        id: "overview",
-        title: "Overview",
-        description: "High-level progress, streaks, and open loops.",
-        layout: "grid",
-        widgets: [
-          { id: "metric-1", type: "metric", title: "Weekly output", description: "Completed units this week", metricLabel: "Done", value: 18 },
-          { id: "progress-1", type: "progress", title: "Overall progress", description: "Across all tracked areas", progress: 64 },
-          { id: "streak-1", type: "metric", title: "Streak", description: "Consecutive active days", metricLabel: "Days", value: 7 }
-        ]
-      },
-      {
-        id: "trackers",
-        title: "Trackers",
-        description: "Editable tracking table for the workflow.",
-        layout: "table",
-        widgets: [
-          {
-            id: "table-1",
-            type: "table",
-            title: "Progress table",
-            description: "Track tasks, subjects, milestones, and deadlines.",
-            fields: [
-              { id: "item", label: "Item", type: "text", required: true },
-              { id: "area", label: "Area", type: "select", required: true, options: ["Practice", "Theory", "Revision"] },
-              { id: "progress", label: "Progress", type: "progress", required: true },
-              { id: "deadline", label: "Deadline", type: "date", required: false }
-            ],
-            items: [
-              { item: "Daily practice", area: "Practice", progress: 70, deadline: "This week" },
-              { item: "Core concepts", area: "Theory", progress: 48, deadline: "Next week" },
-              { item: "Revision loop", area: "Revision", progress: 30, deadline: "Friday" }
-            ]
-          }
-        ]
-      },
-      {
-        id: "execution",
-        title: "Execution",
-        description: "Checklists, notes, and next actions.",
-        layout: "board",
-        widgets: [
-          {
-            id: "checklist-1",
-            type: "checklist",
-            title: "Today checklist",
-            description: "Keep the next actions visible.",
-            items: [
-              { title: "Complete focused session", done: false },
-              { title: "Update progress numbers", done: false },
-              { title: "Write revision note", done: true }
-            ]
-          },
-          { id: "notes-1", type: "notes", title: "Notes", description: "Capture blockers, insights, and reminders.", value: "Add observations after each work block." }
-        ]
-      }
-    ]
+    sections: buildFallbackSections(prompt, domain)
   };
 }
 
@@ -126,7 +304,7 @@ export async function generateWorkspaceFromPrompt(prompt: string) {
         {
           role: "system",
           content:
-            "You design premium schema-based productivity workspaces for LockedIn. Return a practical, editable dashboard schema with useful analytics, sections, fields, widgets, sample entries, tags, and database schema metadata. Keep ids lowercase kebab-case."
+            "You design premium schema-based productivity workspaces for LockedIn. Use the user's prompt exactly to build the workspace. Return a practical, editable dashboard schema with useful analytics, sections, fields, widgets, sample entries, tags, and database schema metadata. Keep ids lowercase kebab-case. Do not invent unrelated content or ignore the prompt." 
         },
         { role: "user", content: prompt }
       ],

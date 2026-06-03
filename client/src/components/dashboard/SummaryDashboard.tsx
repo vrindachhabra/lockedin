@@ -1,11 +1,7 @@
 import { useState } from "react";
 import {
-  CalendarClock,
   ChevronLeft,
-  ChevronRight,
-  Activity,
-  Flame,
-  Trophy
+  ChevronRight
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,11 +16,6 @@ export function SummaryDashboard() {
   const tasks = useLockedInStore((state) => state.tasks);
   const placements = useLockedInStore((state) => state.placements);
   const activeTab = useLockedInStore((state) => state.activeTab);
-  
-  const upcomingTestsCount = placements.filter(
-    (p) => p.oaTestDate && new Date(p.oaTestDate) >= new Date()
-  ).length;
-
   const isWorkspaceGenerator = activeTab === "workspace-generator";
 
   // Heatmap generation for last 4 months
@@ -140,26 +131,7 @@ export function SummaryDashboard() {
 
   return (
     <section className="mb-6">
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-[220px_1fr_1fr]">
-        
-        {/* Column 1: Upcoming Tests (Square) */}
-        <Card className="h-[220px] w-full md:w-[220px] shrink-0 flex flex-col justify-between p-4 bg-white/[0.02] border-white/8 hover:bg-white/[0.04] transition-all duration-300">
-          <div className="flex items-center justify-between h-8">
-            <span className="text-sm font-bold text-muted-foreground">Upcoming Tests</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
-              <CalendarClock className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="my-auto">
-            <p className="text-5xl font-black text-foreground tracking-tight">{upcomingTestsCount}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-              {upcomingTestsCount === 1 ? "1 active assessment" : `${upcomingTestsCount} active assessments`}.
-            </p>
-          </div>
-        </Card>
-
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {isPlacementTracker ? (
           /* Landscape Placement Growth Tree spanning 2 columns */
           <div className="h-[220px] col-span-1 md:col-span-2">

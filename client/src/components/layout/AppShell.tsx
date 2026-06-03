@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="mt-6">
             <button
-              onClick={() => setModal("workspace")}
+              onClick={() => setActiveTab("workspace-generator")}
               className="flex h-11 w-full items-center gap-3 rounded-full bg-slate-800/90 px-4 text-left text-sm font-semibold text-white transition hover:bg-slate-700"
             >
               <Plus className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             ))}
 
-            <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 pb-28">
+            <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-1 pb-4 space-y-2">
               {workspaces.map((workspace) => (
                 <div key={workspace.id} className="group relative">
                   <button
@@ -249,14 +249,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
               ))}
             </div>
+            <div className="mt-4">
+              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                <LogOut className="h-4 w-4" />
+                Log out
+              </Button>
+            </div>
           </nav>
-
-          <div className="absolute left-5 bottom-5 w-[calc(100%-4rem)]">
-            <Button variant="ghost" className="w-full justify-start" onClick={logout}>
-              <LogOut className="h-4 w-4" />
-              Log out
-            </Button>
-          </div>
         </aside>
 
         <section className="min-w-0 flex-1">
@@ -292,7 +291,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
                 {activeTab !== "daily-goals" && activeTab !== "placement-tracker" && activeTab !== "workspace-generator" && (
                   <Button
-                    onClick={() => setModal("workspace")}
+                    onClick={() => setActiveTab("workspace-generator")}
                     size="icon"
                     aria-label="Quick add"
                   >
@@ -344,9 +343,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <button
-        onClick={() =>
-          setModal(activeTab === "daily-goals" ? "task" : activeTab === "placement-tracker" ? "placement" : "workspace")
-        }
+        onClick={() => {
+          if (activeTab === "daily-goals") {
+            setModal("task");
+          } else if (activeTab === "placement-tracker") {
+            setModal("placement");
+          } else if (activeTab !== "workspace-generator") {
+            setActiveTab("workspace-generator");
+          }
+        }}
         className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow transition hover:scale-105 md:hidden"
         aria-label="Quick add"
       >
