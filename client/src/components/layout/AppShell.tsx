@@ -122,9 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="relative flex min-h-screen">
         <aside className="relative flex h-screen min-h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-black/25 p-5 backdrop-blur-xl lg:block">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-base font-black text-primary-foreground">
-              L
-            </div>
+            <img src="/logo.png" alt="LockedIn Logo" className="h-16 w-16 object-contain rounded-xl shadow-lg border border-white/10" />
             <div>
               <p className="text-lg font-bold">LockedIn</p>
               <p className="text-xs text-muted-foreground">Your life. Organized.</p>

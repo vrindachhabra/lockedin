@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LockKeyhole } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,9 +46,7 @@ export function AuthScreen() {
       <div className="pointer-events-none absolute top-0 h-96 w-[44rem] rounded-full bg-primary/14 blur-3xl" />
       <Card className="relative w-full max-w-md p-6">
         <div className="mb-8 flex flex-col items-center text-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <LockKeyhole className="h-5 w-5" />
-          </div>
+          <img src="/logo.png" alt="LockedIn Logo" className="h-28 w-28 object-contain rounded-2xl shadow-xl border border-white/10" />
           <div>
             <p className="text-xl font-bold">LockedIn</p>
             <p className="text-xs text-muted-foreground">Your life. Organized.</p>
