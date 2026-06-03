@@ -20,7 +20,7 @@ const schema = z.object({
   deadline: z.string().optional(),
   schedule: z.enum(["today", "tomorrow", "future", "weekend", "recurring"]),
   recurrence: z.enum(["none", "daily", "weekly", "monthly"]),
-  doItSomeday: z.boolean().default(false)
+  doItSomeday: z.boolean()
 });
 
 type Values = z.infer<typeof schema>;
@@ -55,7 +55,7 @@ export function TaskForm({ task }: { task?: Task }) {
   };
   
   const form = useForm<Values>({
-    resolver: zodResolver(schema) as Resolver<Values>,
+    resolver: zodResolver(schema),
     defaultValues: task
       ? {
           title: task.title,

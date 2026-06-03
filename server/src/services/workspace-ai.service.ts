@@ -43,7 +43,7 @@ function deriveTags(prompt: string) {
   ).map((tag) => tag.replace(/[^a-z0-9]/g, ""));
 }
 
-function buildFallbackSections(prompt: string, domain: string) {
+function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigInput["sections"] {
   const text = prompt.toLowerCase();
   const isStudy = /study|exam|student|assignment|revision|semester|class|course/.test(text);
   const isFitness = /gym|workout|training|nutrition|hydration|body measurement|consistency/.test(text);
