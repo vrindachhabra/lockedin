@@ -57,9 +57,9 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         description: "Track course progress, deadlines, and exam readiness.",
         layout: "grid" as const,
         widgets: [
-          { id: "metric-1", type: "metric", title: "Study progress", description: "Current learning completion", metricLabel: "%", value: 72 },
-          { id: "progress-1", type: "progress", title: "Weekly hours", description: "Time spent on study this week", progress: 58 },
-          { id: "streak-1", type: "metric", title: "Consistency", description: "Days studied in a row", metricLabel: "Days", value: 5 }
+          { id: "metric-1", type: "metric" as const, title: "Study progress", description: "Current learning completion", metricLabel: "%", value: 72 },
+          { id: "progress-1", type: "progress" as const, title: "Weekly hours", description: "Time spent on study this week", progress: 58 },
+          { id: "streak-1", type: "metric" as const, title: "Consistency", description: "Days studied in a row", metricLabel: "Days", value: 5 }
         ]
       },
       {
@@ -70,14 +70,14 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         widgets: [
           {
             id: "table-1",
-            type: "table",
+            type: "table" as const,
             title: "Study schedule",
             description: "Tasks, topics, and deadlines.",
             fields: [
-              { id: "task", label: "Task", type: "text", required: true },
-              { id: "subject", label: "Subject", type: "select", required: true, options: ["Math", "CS", "Physics", "Electives"] },
-              { id: "deadline", label: "Deadline", type: "date", required: false },
-              { id: "status", label: "Status", type: "text", required: false }
+              { id: "task", label: "Task", type: "text" as const, required: true },
+              { id: "subject", label: "Subject", type: "select" as const, required: true, options: ["Math", "CS", "Physics", "Electives"] },
+              { id: "deadline", label: "Deadline", type: "date" as const, required: false },
+              { id: "status", label: "Status", type: "text" as const, required: false }
             ],
             items: [
               { task: "Finish assignment", subject: "CS", deadline: "This week", status: "In progress" },
@@ -95,7 +95,7 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         widgets: [
           {
             id: "checklist-1",
-            type: "checklist",
+            type: "checklist" as const,
             title: "Revision checklist",
             description: "Stay on top of topics and follow-ups.",
             items: [
@@ -104,7 +104,7 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
               { title: "Test weak areas", done: false }
             ]
           },
-          { id: "notes-1", type: "notes", title: "Study notes", description: "Capture thoughts, insights, and exam strategy.", value: "Focus on problem-solving and time management." }
+          { id: "notes-1", type: "notes" as const, title: "Study notes", description: "Capture thoughts, insights, and exam strategy.", value: "Focus on problem-solving and time management." }
         ]
       }
     ];
@@ -118,9 +118,9 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         description: "Track workouts, progress, and recovery.",
         layout: "grid" as const,
         widgets: [
-          { id: "metric-1", type: "metric", title: "Workout streak", description: "Days trained consecutively", metricLabel: "Days", value: 6 },
-          { id: "progress-1", type: "progress", title: "Goal completion", description: "Weekly target progress", progress: 64 },
-          { id: "streak-1", type: "metric", title: "Body metric trend", description: "Weight or measurement progress", metricLabel: "Trend", value: "Up" }
+          { id: "metric-1", type: "metric" as const, title: "Workout streak", description: "Days trained consecutively", metricLabel: "Days", value: 6 },
+          { id: "progress-1", type: "progress" as const, title: "Goal completion", description: "Weekly target progress", progress: 64 },
+          { id: "streak-1", type: "metric" as const, title: "Body metric trend", description: "Weight or measurement progress", metricLabel: "Trend", value: "Up" }
         ]
       },
       {
@@ -131,14 +131,14 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         widgets: [
           {
             id: "table-1",
-            type: "table",
+            type: "table" as const,
             title: "Training log",
             description: "Plan and review workout sessions.",
             fields: [
-              { id: "exercise", label: "Exercise", type: "text", required: true },
-              { id: "reps", label: "Reps", type: "text", required: false },
-              { id: "sets", label: "Sets", type: "text", required: false },
-              { id: "notes", label: "Notes", type: "text", required: false }
+              { id: "exercise", label: "Exercise", type: "text" as const, required: true },
+              { id: "reps", label: "Reps", type: "text" as const, required: false },
+              { id: "sets", label: "Sets", type: "text" as const, required: false },
+              { id: "notes", label: "Notes", type: "text" as const, required: false }
             ],
             items: [
               { exercise: "Squats", reps: "5x5", sets: "5", notes: "Increase load" },
@@ -156,7 +156,7 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         widgets: [
           {
             id: "checklist-1",
-            type: "checklist",
+            type: "checklist" as const,
             title: "Daily habits",
             description: "Keep healthy routines visible.",
             items: [
@@ -165,7 +165,7 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
               { title: "Stretch after training", done: false }
             ]
           },
-          { id: "notes-1", type: "notes", title: "Recovery notes", description: "Track soreness, sleep, and energy.", value: "Rest well and adjust intensity as needed." }
+          { id: "notes-1", type: "notes" as const, title: "Recovery notes", description: "Track soreness, sleep, and energy.", value: "Rest well and adjust intensity as needed." }
         ]
       }
     ];
@@ -179,9 +179,9 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         description: "Track progress across roadmap, metrics, and experiments.",
         layout: "grid" as const,
         widgets: [
-          { id: "metric-1", type: "metric", title: "Experiment wins", description: "Successful product experiments", metricLabel: "Count", value: 5 },
-          { id: "progress-1", type: "progress", title: "Roadmap completion", description: "Release milestones done", progress: 48 },
-          { id: "streak-1", type: "metric", title: "User feedback", description: "Positive feedback items", metricLabel: "Count", value: 12 }
+          { id: "metric-1", type: "metric" as const, title: "Experiment wins", description: "Successful product experiments", metricLabel: "Count", value: 5 },
+          { id: "progress-1", type: "progress" as const, title: "Roadmap completion", description: "Release milestones done", progress: 48 },
+          { id: "streak-1", type: "metric" as const, title: "User feedback", description: "Positive feedback items", metricLabel: "Count", value: 12 }
         ]
       },
       {
@@ -192,14 +192,14 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         widgets: [
           {
             id: "table-1",
-            type: "table",
+            type: "table" as const,
             title: "Startup tasks",
             description: "Track initiatives and next steps.",
             fields: [
-              { id: "initiative", label: "Initiative", type: "text", required: true },
-              { id: "owner", label: "Owner", type: "text", required: false },
-              { id: "status", label: "Status", type: "select", required: false, options: ["Planned", "In progress", "Done"] },
-              { id: "notes", label: "Notes", type: "text", required: false }
+              { id: "initiative", label: "Initiative", type: "text" as const, required: true },
+              { id: "owner", label: "Owner", type: "text" as const, required: false },
+              { id: "status", label: "Status", type: "select" as const, required: false, options: ["Planned", "In progress", "Done"] },
+              { id: "notes", label: "Notes", type: "text" as const, required: false }
             ],
             items: [
               { initiative: "Run A/B test", owner: "Product", status: "In progress", notes: "Monitor conversion" },
@@ -215,7 +215,7 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
         description: "Capture ideas, blockers, and product learnings.",
         layout: "board" as const,
         widgets: [
-          { id: "notes-1", type: "notes", title: "Product notes", description: "Write down important takeaways.", value: "Focus on user pain points and growth opportunities." }
+          { id: "notes-1", type: "notes" as const, title: "Product notes", description: "Write down important takeaways.", value: "Focus on user pain points and growth opportunities." }
         ]
       }
     ];
@@ -228,9 +228,9 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
       description: "High-level progress, streaks, and open loops.",
       layout: "grid" as const,
       widgets: [
-        { id: "metric-1", type: "metric", title: "Weekly output", description: "Completed units this week", metricLabel: "Done", value: 18 },
-        { id: "progress-1", type: "progress", title: "Overall progress", description: "Across all tracked areas", progress: 64 },
-        { id: "streak-1", type: "metric", title: "Streak", description: "Consecutive active days", metricLabel: "Days", value: 7 }
+        { id: "metric-1", type: "metric" as const, title: "Weekly output", description: "Completed units this week", metricLabel: "Done", value: 18 },
+        { id: "progress-1", type: "progress" as const, title: "Overall progress", description: "Across all tracked areas", progress: 64 },
+        { id: "streak-1", type: "metric" as const, title: "Streak", description: "Consecutive active days", metricLabel: "Days", value: 7 }
       ]
     },
     {
@@ -241,14 +241,14 @@ function buildFallbackSections(prompt: string, domain: string): WorkspaceConfigI
       widgets: [
         {
           id: "table-1",
-          type: "table",
+          type: "table" as const,
           title: "Progress table",
           description: "Track tasks, subjects, milestones, and deadlines.",
           fields: [
-            { id: "item", label: "Item", type: "text", required: true },
-            { id: "area", label: "Area", type: "select", required: true, options: ["Core", "Revision", "Practice", "Admin"] },
-            { id: "progress", label: "Progress", type: "progress", required: true },
-            { id: "deadline", label: "Deadline", type: "date", required: false }
+            { id: "item", label: "Item", type: "text" as const, required: true },
+            { id: "area", label: "Area", type: "select" as const, required: true, options: ["Core", "Revision", "Practice", "Admin"] },
+            { id: "progress", label: "Progress", type: "progress" as const, required: true },
+            { id: "deadline", label: "Deadline", type: "date" as const, required: false }
           ],
           items: [
             { item: "Daily practice", area: "Practice", progress: 70, deadline: "This week" },
@@ -283,11 +283,11 @@ export function fallbackWorkspace(prompt: string): WorkspaceConfigInput {
     schema: {
       collectionName: `${slug(title)}_entries`,
       fields: [
-        { id: "title", label: "Title", type: "text", required: true },
-        { id: "category", label: "Category", type: "select", required: true, options: ["Core", "Revision", "Practice", "Admin"] },
-        { id: "progress", label: "Progress", type: "progress", required: true },
-        { id: "deadline", label: "Deadline", type: "date", required: false },
-        { id: "tags", label: "Tags", type: "tags", required: false }
+        { id: "title", label: "Title", type: "text" as const, required: true },
+        { id: "category", label: "Category", type: "select" as const, required: true, options: ["Core", "Revision", "Practice", "Admin"] },
+        { id: "progress", label: "Progress", type: "progress" as const, required: true },
+        { id: "deadline", label: "Deadline", type: "date" as const, required: false },
+        { id: "tags", label: "Tags", type: "tags" as const, required: false }
       ]
     },
     sections: buildFallbackSections(prompt, domain)
