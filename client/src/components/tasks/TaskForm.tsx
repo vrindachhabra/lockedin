@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import * as React from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +19,8 @@ const schema = z.object({
   dueDate: z.string().optional().or(z.literal("")),
   deadline: z.string().optional(),
   schedule: z.enum(["today", "tomorrow", "future", "weekend", "recurring"]),
-  recurrence: z.enum(["none", "daily", "weekly", "monthly"])
-  ,
-  doItSomeday: z.boolean().optional().default(false)
+  recurrence: z.enum(["none", "daily", "weekly", "monthly"]),
+  doItSomeday: z.boolean().default(false)
 });
 
 type Values = z.infer<typeof schema>;
@@ -56,17 +55,18 @@ export function TaskForm({ task }: { task?: Task }) {
   };
   
   const form = useForm<Values>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<Values>,
     defaultValues: task
       ? {
           title: task.title,
           description: task.description,
           category: task.category,
           priority: task.priority,
-          dueDate: toInputDate(new Date(task.dueDate)),
+          dueDate: task.dueDate ? toInputDate(new Date(task.dueDate)) : "",
           deadline: task.deadline ? toInputDate(new Date(task.deadline)) : "",
           schedule: task.schedule,
-          recurrence: task.recurrence
+          recurrence: task.recurrence,
+          doItSomeday: false
         }
       : normalizedDraft
   });
