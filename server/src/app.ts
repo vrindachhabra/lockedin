@@ -16,6 +16,9 @@ export function createApp() {
 
   app.use(helmet());
   const allowedOrigins = env.CLIENT_ORIGIN.split(",").map((o) => o.trim());
+  if (!allowedOrigins.includes("https://lockedin-client.vercel.app")) {
+    allowedOrigins.push("https://lockedin-client.vercel.app");
+  }
   app.use(
     cors({
       origin: (origin, callback) => {
