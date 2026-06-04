@@ -1,6 +1,6 @@
 import type { DashboardPayload, Placement, Task, User, WorkspaceConfig } from "@/types";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "";
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "https://lockedin-3ik2.onrender.com");
 const TOKEN_KEY = "lockedin.token";
 
 export class ApiError extends Error {
