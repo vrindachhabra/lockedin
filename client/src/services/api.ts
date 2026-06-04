@@ -1,6 +1,13 @@
 import type { DashboardPayload, Placement, Task, User, WorkspaceConfig } from "@/types";
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "https://lockedin-3ik2.onrender.com");
+const getApiUrl = () => {
+  const url = import.meta.env.VITE_API_URL || "";
+  if (!import.meta.env.DEV && (url.includes("localhost") || url.includes("127.0.0.1"))) {
+    return "https://lockedin-3ik2.onrender.com";
+  }
+  return url || (import.meta.env.DEV ? "" : "https://lockedin-3ik2.onrender.com");
+};
+const API_URL = getApiUrl();
 const TOKEN_KEY = "lockedin.token";
 
 export class ApiError extends Error {
