@@ -33,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [editingTabValue, setEditingTabValue] = useState("");
   const [editingWorkspaceId, setEditingWorkspaceId] = useState<string | null>(null);
   const [editingWorkspaceValue, setEditingWorkspaceValue] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("lockedin-tab-labels");
@@ -120,7 +121,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
       )}
       <div className="relative flex min-h-screen">
-        <aside className="relative flex h-screen min-h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-black/25 p-5 backdrop-blur-xl lg:block">
+        {/* Mobile Menu Backdrop */}
+        {mobileMenuOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+        
+        <aside className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-screen min-h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-background/95 p-5 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="LockedIn Logo" className="h-16 w-16 object-contain rounded-xl shadow-lg border border-white/10" />
             <div>
@@ -130,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="mt-6">
             <button
-              onClick={() => setActiveTab("workspace-generator")}
+              onClick={() => { setActiveTab("workspace-generator"); setMobileMenuOpen(false); }}
               className="flex h-11 w-full items-center gap-3 rounded-full bg-slate-800/90 px-4 text-left text-sm font-semibold text-white transition hover:bg-slate-700"
             >
               <Plus className="h-4 w-4" />
@@ -142,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {tabs.map((tab) => (
               <div key={tab.id} className="group relative">
                 <button
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
                   className={cn(
                     "flex h-11 w-full items-center gap-3 rounded-lg px-3 pr-14 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
                     activeTab === tab.id && "bg-white/10 text-foreground"
@@ -189,7 +201,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {workspaces.map((workspace) => (
                 <div key={workspace.id} className="group relative">
                   <button
-                    onClick={() => setActiveTab(`workspace:${workspace.id}`)}
+                    onClick={() => { setActiveTab(`workspace:${workspace.id}`); setMobileMenuOpen(false); }}
                     className={cn(
                       "flex h-11 w-full items-center gap-3 rounded-lg px-3 pr-14 text-left text-sm font-semibold text-muted-foreground transition hover:bg-white/8 hover:text-foreground",
                       activeTab === `workspace:${workspace.id}` && "bg-white/10 text-foreground"
@@ -260,7 +272,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 border-b border-white/8 bg-background/75 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Button variant="secondary" size="icon" className="lg:hidden" aria-label="Open navigation">
+                <Button variant="secondary" size="icon" className="lg:hidden" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}>
                   <Menu className="h-4 w-4" />
                 </Button>
                 <div>
