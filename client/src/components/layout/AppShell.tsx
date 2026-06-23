@@ -115,11 +115,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background">
-      <div className="surface-line pointer-events-none absolute inset-0 opacity-80" />
-      {activeTab !== "workspace-generator" && (
-        <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
-      )}
+    <main className="relative min-h-screen bg-background">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="surface-line absolute inset-0 opacity-80" />
+        {activeTab !== "workspace-generator" && (
+          <div className="absolute left-1/2 top-0 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl" />
+        )}
+      </div>
       <div className="relative flex min-h-screen">
         {/* Mobile Menu Backdrop */}
         {mobileMenuOpen && (
@@ -130,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
         
         <aside className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-background/95 p-5 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-background/95 p-5 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="flex items-center gap-3">
@@ -269,7 +271,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <section className="min-w-0 flex-1">
+        <section className="min-w-0 flex-1 lg:ml-72">
           <header className="sticky top-0 z-30 border-b border-white/8 bg-background/75 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
