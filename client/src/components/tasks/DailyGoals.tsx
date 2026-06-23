@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import type { Task, TaskStatus } from "@/types";
-import { formatDate, isOverdue, isToday } from "@/lib/date";
+import { formatDate, isOverdue, isToday, isTaskOnDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const filters = [
@@ -22,7 +22,8 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
   const rawFilter = useLockedInStore((state) => state.taskFilter);
   const search = useDebounce(useLockedInStore((state) => state.search));
 
-  const filter = ["today", "upcoming", "some-time"].includes(rawFilter) ? rawFilter : "today";
+  const isDateFilter = !["today", "upcoming", "some-time"].includes(rawFilter);
+  const filter = isDateFilter ? "date" : rawFilter;
 
   return tasks.filter((task) => {
     const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
@@ -33,9 +34,23 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
       if (taskCategory !== activeCategory.toLowerCase()) return false;
     }
 
-    if (filter === "today") return task.dueDate ? isToday(task.dueDate) : false;
-    if (filter === "upcoming") return task.dueDate ? (new Date(task.dueDate) > new Date() && !isToday(task.dueDate)) : false;
-    if (filter === "some-time") return (!task.dueDate && !task.completed) || (task.dueDate ? (isOverdue(task.dueDate) && !isToday(task.dueDate) && !task.completed) : false);
+    if (filter === "today") return isTaskOnDate(task, new Date());
+    if (filter === "upcoming") {
+      if (!task.dueDate) return false;
+      if (task.recurrence && task.recurrence !== "none") {
+        if (task.deadline) {
+          const dl = new Date(task.deadline);
+          dl.setHours(23, 59, 59, 999);
+          return dl > new Date();
+        }
+        return true;
+      }
+      return new Date(task.dueDate) > new Date() && !isToday(task.dueDate);
+    }
+    if (filter === "some-time") return (!task.dueDate && !task.completed) || (task.dueDate ? (isOverdue(task.dueDate) && !isTaskOnDate(task, new Date()) && !task.completed) : false);
+    if (filter === "date") {
+      return isTaskOnDate(task, new Date(rawFilter));
+    }
     return true;
   });
 }
@@ -174,7 +189,8 @@ export function DailyGoals() {
     });
   };
   
-  const activeFilter = ["today", "upcoming", "some-time"].includes(rawFilter) ? rawFilter : "today";
+  const isDateFilter = !["today", "upcoming", "some-time"].includes(rawFilter);
+  const activeFilter = rawFilter;
   
   const completed = tasks.filter((task) => task.completed).length;
   const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
@@ -200,6 +216,11 @@ export function DailyGoals() {
                       {label}
                     </TabsTrigger>
                   ))}
+                  {isDateFilter && (
+                    <TabsTrigger value={rawFilter} disabled={isKanban}>
+                      {new Date(rawFilter).toLocaleDateString("en", { month: "short", day: "numeric" })}
+                    </TabsTrigger>
+                  )}
                 </TabsList>
               </Tabs>
               
@@ -266,7 +287,7 @@ export function DailyGoals() {
               <div className="flex min-w-[220px] flex-col gap-1.5 lg:w-72">
                 <div className="flex justify-between text-xs font-medium">
                   <span className="text-muted-foreground capitalize">
-                    {activeFilter === "some-time" ? "Progress" : `${activeFilter} Progress`}
+                    {activeFilter === "some-time" ? "Progress" : isDateFilter ? `${new Date(rawFilter).toLocaleDateString("en", { month: "short", day: "numeric" })} Progress` : `${activeFilter} Progress`}
                   </span>
                   <span className="text-foreground font-semibold">{completed}/{tasks.length} done ({progress}%)</span>
                 </div>

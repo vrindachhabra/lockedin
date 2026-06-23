@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { cn } from "@/lib/utils";
+import { isTaskOnDate } from "@/lib/date";
 import { PlacementGrowthTree } from "@/components/placements/PlacementGrowthTree";
 
 export function SummaryDashboard() {
@@ -16,6 +17,8 @@ export function SummaryDashboard() {
   const tasks = useLockedInStore((state) => state.tasks);
   const placements = useLockedInStore((state) => state.placements);
   const activeTab = useLockedInStore((state) => state.activeTab);
+  const setActiveTab = useLockedInStore((state) => state.setActiveTab);
+  const setTaskFilter = useLockedInStore((state) => state.setTaskFilter);
   const isWorkspaceGenerator = activeTab === "workspace-generator";
 
   // Heatmap generation for last 4 months
@@ -110,9 +113,7 @@ export function SummaryDashboard() {
   const weekEndStr = weekDays[6].toLocaleDateString("en", { month: "short", day: "numeric" });
   
   const chartData = weekDays.map((date) => {
-    const dayTasks = tasks.filter(
-      (t) => t.dueDate ? new Date(t.dueDate).toDateString() === date.toDateString() : false
-    );
+    const dayTasks = tasks.filter((t) => isTaskOnDate(t, date));
     const completed = dayTasks.filter((t) => t.completed).length;
     const percentage = dayTasks.length ? Math.round((completed / dayTasks.length) * 100) : 0;
     
@@ -157,9 +158,7 @@ export function SummaryDashboard() {
                   const isDayToday = date.toDateString() === today.toDateString();
                   const dayNum = date.getDate();
                   
-                  const dayTasks = tasks.filter(
-                    (t) => t.dueDate ? new Date(t.dueDate).toDateString() === date.toDateString() : false
-                  );
+                  const dayTasks = tasks.filter((t) => isTaskOnDate(t, date));
                   
                   const hasTasks = dayTasks.length > 0;
                   const hasTests = placements.some(
@@ -169,7 +168,11 @@ export function SummaryDashboard() {
                   return (
                     <div 
                       key={idx} 
-                      className="relative h-6 flex flex-col items-center justify-center rounded-md transition hover:bg-white/5 cursor-default group"
+                      className="relative h-6 flex flex-col items-center justify-center rounded-md transition hover:bg-white/5 cursor-pointer group"
+                      onClick={() => {
+                        setTaskFilter(date.toISOString());
+                        setActiveTab("daily-goals");
+                      }}
                     >
                       {/* Task List Dialog Tooltip */}
                       {hasTasks && (
