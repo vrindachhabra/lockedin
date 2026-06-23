@@ -2,16 +2,7 @@ import type { DashboardPayload, Placement, Task, User, WorkspaceConfig } from "@
 
 const getApiUrl = () => {
   if (import.meta.env.DEV) return "";
-
-  let url = import.meta.env.VITE_API_URL || "";
-  // Prevent deployed Vercel apps from trying to hit localhost if env vars are misconfigured
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    if (url.includes("localhost") || url.includes("127.0.0.1")) {
-      url = "https://lockedin-3ik2.onrender.com";
-    }
-  }
-  
-  return url || "https://lockedin-3ik2.onrender.com";
+  return "https://lockedin-3ik2.onrender.com";
 };
 const API_URL = getApiUrl();
 const TOKEN_KEY = "lockedin.token";
