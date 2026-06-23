@@ -72,7 +72,7 @@ function TaskRow({ task }: { task: Task }) {
         <p className={cn("truncate text-sm font-semibold", task.completed && "text-muted-foreground line-through")}>{task.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
           {task.category} {task.dueDate ? `/ ${formatDate(task.dueDate)}` : "/ Someday"}
-          {task.deadline ? ` / Deadline ${formatDate(task.deadline)}` : ""}
+          {task.deadline ? ` / Till ${formatDate(task.deadline)}` : ""}
           {task.recurrence && task.recurrence !== "none" ? ` / ${task.recurrence}` : ""}
         </p>
       </div>

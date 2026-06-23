@@ -130,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
         
         <aside className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen min-h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-background/95 p-5 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-screen w-72 shrink-0 flex-col border-r border-white/8 bg-background/95 p-5 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="flex items-center gap-3">
@@ -259,13 +259,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
               ))}
             </div>
-            <div className="mt-4">
-              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
-                <LogOut className="h-4 w-4" />
-                Log out
-              </Button>
-            </div>
           </nav>
+
+          <div className="mt-auto pt-4 border-t border-white/8">
+            <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+              <LogOut className="h-4 w-4" />
+              Log out
+            </Button>
+          </div>
         </aside>
 
         <section className="min-w-0 flex-1">

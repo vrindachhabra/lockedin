@@ -153,7 +153,7 @@ export function TaskForm({ task }: { task?: Task }) {
           <Input type="date" {...form.register("dueDate")} />
         </div>
         <div>
-          <label className="mb-2 block text-xs font-medium text-muted-foreground">Deadline, if any</label>
+          <label className="mb-2 block text-xs font-medium text-muted-foreground">Till</label>
           <Input type="date" {...form.register("deadline")} />
         </div>
         
