@@ -19,6 +19,12 @@ export function createApp() {
   if (!allowedOrigins.includes("https://lockedin-client.vercel.app")) {
     allowedOrigins.push("https://lockedin-client.vercel.app");
   }
+  if (!allowedOrigins.includes("http://localhost:5173")) {
+    allowedOrigins.push("http://localhost:5173");
+  }
+  if (!allowedOrigins.includes("http://localhost:5174")) {
+    allowedOrigins.push("http://localhost:5174");
+  }
   app.use(
     cors({
       origin: (origin, callback) => {
