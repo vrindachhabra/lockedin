@@ -1,7 +1,12 @@
 import type { DashboardPayload, Placement, Task, User, WorkspaceConfig } from "@/types";
 
 const getApiUrl = () => {
-  if (import.meta.env.DEV) return "http://localhost:8080";
+  if (import.meta.env.DEV) {
+    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return `http://${window.location.hostname}:8080`;
+    }
+    return "http://localhost:8080";
+  }
   const url = import.meta.env.VITE_API_URL || "";
   return url || "https://lockedin-3ik2.onrender.com";
 };

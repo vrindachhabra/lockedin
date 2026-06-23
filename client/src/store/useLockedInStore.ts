@@ -170,13 +170,21 @@ export const useLockedInStore = create<LockedInState>()(
       },
       updateTask: async (id, patch, opts) => {
         const previous = get().tasks;
+        const taskToUpdate = previous.find((t) => t.id === id);
+        if (!taskToUpdate) return;
+
+        const status = patch.status ?? (patch.completed === true ? "done" : (patch.completed === false && taskToUpdate.status === "done" ? "todo" : taskToUpdate.status));
+        const completed = patch.completed ?? (status === "done");
+        
+        const finalPatch = { ...patch, status, completed };
+
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, ...patch, status: patch.completed ? "done" : (patch.status ?? task.status) } : task
+            task.id === id ? { ...task, ...finalPatch } : task
           )
         }));
         try {
-          await api.tasks.update(id, patch);
+          await api.tasks.update(id, finalPatch);
           if (!opts?.silent) {
             get().pushToast({ title: "Task updated", description: "Your task changes were saved.", tone: "success" });
           }
