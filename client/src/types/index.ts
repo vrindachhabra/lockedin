@@ -26,6 +26,7 @@ export type Task = {
   status: TaskStatus;
   completed: boolean;
   completedAt?: string;
+  completedDates?: string[];
 };
 
 export type Placement = {

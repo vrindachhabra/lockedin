@@ -14,6 +14,7 @@ const taskSchema = new Schema(
     status: { type: String, enum: ["todo", "in-progress", "done"], default: "todo", index: true },
     completed: { type: Boolean, default: false },
     completedAt: { type: Date },
+    completedDates: { type: [String], default: [] },
     streakContribution: { type: Boolean, default: true }
   },
   { timestamps: true }

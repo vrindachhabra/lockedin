@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import { cn } from "@/lib/utils";
-import { isTaskOnDate } from "@/lib/date";
+import { isTaskOnDate, isTaskCompletedOnDate } from "@/lib/date";
 import { PlacementGrowthTree } from "@/components/placements/PlacementGrowthTree";
 
 export function SummaryDashboard() {
@@ -114,7 +114,7 @@ export function SummaryDashboard() {
   
   const chartData = weekDays.map((date) => {
     const dayTasks = tasks.filter((t) => isTaskOnDate(t, date));
-    const completed = dayTasks.filter((t) => t.completed).length;
+    const completed = dayTasks.filter((t) => isTaskCompletedOnDate(t, date)).length;
     const percentage = dayTasks.length ? Math.round((completed / dayTasks.length) * 100) : 0;
     
     return {

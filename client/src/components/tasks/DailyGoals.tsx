@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLockedInStore } from "@/store/useLockedInStore";
 import type { Task, TaskStatus } from "@/types";
-import { formatDate, isOverdue, isToday, isTaskOnDate } from "@/lib/date";
+import { formatDate, isOverdue, isToday, isTaskOnDate, isTaskCompletedOnDate, toInputDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const filters = [
@@ -55,8 +55,10 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
   });
 
   return filteredTasks.sort((a, b) => {
-    if (a.completed && !b.completed) return 1;
-    if (!a.completed && b.completed) return -1;
+    const aCompleted = isTaskCompletedOnDate(a, filter === "date" ? rawFilter : new Date());
+    const bCompleted = isTaskCompletedOnDate(b, filter === "date" ? rawFilter : new Date());
+    if (aCompleted && !bCompleted) return 1;
+    if (!aCompleted && bCompleted) return -1;
     return 0;
   });
 }
@@ -65,6 +67,28 @@ function TaskRow({ task }: { task: Task }) {
   const updateTask = useLockedInStore((state) => state.updateTask);
   const deleteTask = useLockedInStore((state) => state.deleteTask);
   const setModal = useLockedInStore((state) => state.setModal);
+  const taskFilter = useLockedInStore((state) => state.taskFilter);
+  
+  const isDateFilter = !["today", "upcoming", "some-time"].includes(taskFilter);
+  const activeDate = isDateFilter ? new Date(taskFilter) : new Date();
+  const activeDateStr = toInputDate(activeDate);
+
+  const isCompleted = isTaskCompletedOnDate(task, activeDate);
+
+  const handleToggle = () => {
+    if (task.recurrence && task.recurrence !== "none") {
+      const dates = new Set(task.completedDates || []);
+      if (isCompleted) {
+        dates.delete(activeDateStr);
+      } else {
+        dates.add(activeDateStr);
+      }
+      updateTask(task.id, { completedDates: Array.from(dates) }, { silent: true });
+    } else {
+      updateTask(task.id, { completed: !task.completed }, { silent: true });
+    }
+  };
+
   return (
     <motion.div
       layout
@@ -73,9 +97,9 @@ function TaskRow({ task }: { task: Task }) {
       exit={{ opacity: 0, x: -20 }}
       className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/[0.035] p-3"
     >
-      <Checkbox checked={task.completed} onCheckedChange={() => updateTask(task.id, { completed: !task.completed }, { silent: true })} />
+      <Checkbox checked={isCompleted} onCheckedChange={handleToggle} />
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-sm font-semibold", task.completed && "text-muted-foreground line-through")}>{task.title}</p>
+        <p className={cn("truncate text-sm font-semibold", isCompleted && "text-muted-foreground line-through")}>{task.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
           {task.category} {task.dueDate ? `/ ${formatDate(task.dueDate)}` : "/ Someday"}
           {task.deadline ? ` / Till ${formatDate(task.deadline)}` : ""}
@@ -121,6 +145,11 @@ function ListView({ tasks }: { tasks: Task[] }) {
 
 function KanbanView({ tasks, interactive = false }: { tasks: Task[]; interactive?: boolean }) {
   const updateTask = useLockedInStore((state) => state.updateTask);
+  const taskFilter = useLockedInStore((state) => state.taskFilter);
+  const isDateFilter = !["today", "upcoming", "some-time"].includes(taskFilter);
+  const activeDate = isDateFilter ? new Date(taskFilter) : new Date();
+  const activeDateStr = toInputDate(activeDate);
+
   const columns: Array<[TaskStatus, string]> = [["todo", "To do"], ["done", "Done"]];
   return (
     <div className="grid gap-3 lg:grid-cols-3">
@@ -128,13 +157,28 @@ function KanbanView({ tasks, interactive = false }: { tasks: Task[]; interactive
         <div key={status} className="rounded-xl border border-white/8 bg-white/[0.025] p-3">
           <p className="mb-3 text-sm font-semibold">{label}</p>
           <div className="space-y-3 max-h-64 overflow-y-auto pr-2 visible-scrollbar">
-            {tasks.filter((task) => task.status === status || (status === "done" && task.completed)).map((task) => (
+            {tasks.filter((task) => {
+              const isCompleted = isTaskCompletedOnDate(task, activeDate);
+              return (status === "todo" && !isCompleted) || (status === "done" && isCompleted);
+            }).map((task) => {
+              const isCompleted = isTaskCompletedOnDate(task, activeDate);
+              return (
               interactive ? (
                 <button
                   key={task.id}
                   onClick={() => {
-                    const newStatus: TaskStatus = status === "done" ? "todo" : "done";
-                    updateTask(task.id, { status: newStatus, completed: newStatus === "done" });
+                    if (task.recurrence && task.recurrence !== "none") {
+                      const dates = new Set(task.completedDates || []);
+                      if (isCompleted) {
+                        dates.delete(activeDateStr);
+                      } else {
+                        dates.add(activeDateStr);
+                      }
+                      updateTask(task.id, { completedDates: Array.from(dates) });
+                    } else {
+                      const newStatus: TaskStatus = status === "done" ? "todo" : "done";
+                      updateTask(task.id, { status: newStatus, completed: newStatus === "done" });
+                    }
                   }}
                   className="w-full rounded-lg border border-white/8 bg-white/[0.04] p-3 text-left"
                 >
@@ -147,7 +191,7 @@ function KanbanView({ tasks, interactive = false }: { tasks: Task[]; interactive
                   <p className="mt-1 text-xs text-muted-foreground">{task.dueDate ? formatDate(task.dueDate) : "Someday"} / {task.category}</p>
                 </div>
               )
-            ))}
+            ); })}
           </div>
         </div>
       ))}
@@ -184,8 +228,12 @@ export function DailyGoals() {
   const setModal = useLockedInStore((state) => state.setModal);
   const updateTask = useLockedInStore((state) => state.updateTask);
 
+  const isDateFilter = !["today", "upcoming", "some-time"].includes(rawFilter);
+  const activeFilter = rawFilter;
+  const activeDate = isDateFilter ? new Date(rawFilter) : new Date();
+
   const rollOverTodayTasks = () => {
-    const todayUncompleted = tasks.filter(t => !t.completed);
+    const todayUncompleted = tasks.filter(t => !isTaskCompletedOnDate(t, activeDate));
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString();
@@ -195,10 +243,8 @@ export function DailyGoals() {
     });
   };
   
-  const isDateFilter = !["today", "upcoming", "some-time"].includes(rawFilter);
-  const activeFilter = rawFilter;
-  
-  const completed = tasks.filter((task) => task.completed).length;
+
+  const completed = tasks.filter((task) => isTaskCompletedOnDate(task, activeDate)).length;
   const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
 
   return (

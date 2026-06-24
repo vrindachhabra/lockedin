@@ -56,3 +56,9 @@ export function isTaskOnDate(task: { dueDate?: string; deadline?: string; recurr
   }
   return false;
 }
+export function isTaskCompletedOnDate(task: { completed: boolean; recurrence?: string; completedDates?: string[] }, targetDate: Date | string) {
+  if (task.recurrence && task.recurrence !== "none") {
+    return !!task.completedDates?.includes(toInputDate(targetDate));
+  }
+  return task.completed;
+}

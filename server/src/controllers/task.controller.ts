@@ -17,36 +17,7 @@ export async function listTasks(request: Request, response: Response) {
   if (filter === "overdue") query.dueDate = { $lt: now };
   if (filter === "upcoming") query.dueDate = { $gte: now };
 
-  const rawTasks = await TaskModel.find(query).sort({ dueDate: 1, priority: -1 }).lean();
-
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  const tasksToUpdate: any[] = [];
-  const tasks = rawTasks.map((task) => {
-    if (task.recurrence && task.recurrence !== "none" && task.completed) {
-      if (task.completedAt) {
-        const completedDate = new Date(task.completedAt);
-        completedDate.setHours(0, 0, 0, 0);
-        if (completedDate.getTime() < todayStart.getTime()) {
-          tasksToUpdate.push(task._id);
-          return { ...task, completed: false, status: "todo" };
-        }
-      } else {
-        tasksToUpdate.push(task._id);
-        return { ...task, completed: false, status: "todo" };
-      }
-    }
-    return task;
-  });
-
-  if (tasksToUpdate.length > 0) {
-    TaskModel.updateMany(
-      { _id: { $in: tasksToUpdate } },
-      { $set: { completed: false, status: "todo" } }
-    ).exec().catch(console.error);
-  }
-
+  const tasks = await TaskModel.find(query).sort({ dueDate: 1, priority: -1 }).lean();
   return response.json(tasks);
 }
 
