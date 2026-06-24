@@ -86,12 +86,43 @@ type LockedInState = {
 
 const idOf = (item: { id?: string; _id?: string }) => item._id ?? item.id ?? crypto.randomUUID();
 
-const normalizeDashboard = (dashboard: DashboardPayload) => ({
-  ...dashboard,
-  tasks: dashboard.tasks.map((task) => ({ ...task, id: idOf(task) })),
-  placements: dashboard.placements.map((placement) => ({ ...placement, id: idOf(placement) })),
-  workspaces: (dashboard.workspaces ?? []).map((workspace) => ({ ...workspace, id: idOf(workspace) }))
-});
+const normalizeDashboard = (dashboard: DashboardPayload) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const tasks = dashboard.tasks.map((task) => {
+    let completed = task.completed;
+    let status = task.status;
+    
+    if (task.recurrence && task.recurrence !== "none" && completed) {
+      if (task.completedAt) {
+        const completedDate = new Date(task.completedAt);
+        completedDate.setHours(0, 0, 0, 0);
+        if (completedDate.getTime() < now.getTime()) {
+          completed = false;
+          status = "todo";
+        }
+      } else {
+        completed = false;
+        status = "todo";
+      }
+    }
+
+    return {
+      ...task,
+      completed,
+      status,
+      id: idOf(task)
+    };
+  });
+
+  return {
+    ...dashboard,
+    tasks,
+    placements: dashboard.placements.map((placement) => ({ ...placement, id: idOf(placement) })),
+    workspaces: (dashboard.workspaces ?? []).map((workspace) => ({ ...workspace, id: idOf(workspace) }))
+  };
+};
 
 export const useLockedInStore = create<LockedInState>()(
   persist(
