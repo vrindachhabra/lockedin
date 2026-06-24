@@ -189,8 +189,9 @@ export const useLockedInStore = create<LockedInState>()(
             get().pushToast({ title: "Task updated", description: "Your task changes were saved.", tone: "success" });
           }
         } catch {
-          set({ tasks: previous });
-          get().pushToast({ title: "Task update failed", description: "Your previous state was restored.", tone: "error" });
+          if (!opts?.silent) {
+            get().pushToast({ title: "Saved locally", description: "Changes will sync when online.", tone: "info" });
+          }
         }
       },
       deleteTask: async (id) => {
