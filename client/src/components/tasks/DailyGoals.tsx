@@ -25,7 +25,7 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
   const isDateFilter = !["today", "upcoming", "some-time"].includes(rawFilter);
   const filter = isDateFilter ? "date" : rawFilter;
 
-  return tasks.filter((task) => {
+  const filteredTasks = tasks.filter((task) => {
     const matchesSearch = [task.title, task.category, task.description].join(" ").toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
 
@@ -52,6 +52,12 @@ function useFilteredTasks(activeCategory: "All" | "Personal" | "Routine") {
       return isTaskOnDate(task, new Date(rawFilter));
     }
     return true;
+  });
+
+  return filteredTasks.sort((a, b) => {
+    if (a.completed && !b.completed) return 1;
+    if (!a.completed && b.completed) return -1;
+    return 0;
   });
 }
 

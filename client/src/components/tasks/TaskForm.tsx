@@ -89,7 +89,7 @@ export function TaskForm({ task }: { task?: Task }) {
     }
   }, [task]);
 
-  const onSubmit = async (values: Values) => {
+  const onSubmit = (values: Values) => {
     if (values.category === "Routine" && values.recurrence === "none") {
       pushToast({
         title: "Recurrence Required",
@@ -106,9 +106,9 @@ export function TaskForm({ task }: { task?: Task }) {
     };
 
     if (task) {
-      await updateTask(task.id, taskData);
+      updateTask(task.id, taskData);
     } else {
-      await addTask({
+      addTask({
         ...taskData,
         status: "todo",
         completed: false
